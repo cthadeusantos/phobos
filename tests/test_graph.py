@@ -31,6 +31,10 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(self.v1.neighbors[self.v2].distance, 15)
         self.assertEqual(self.v1.neighbors[self.v2].cable, self.cable1)
 
+    def test_add_invalid_edge(self):
+        with self.assertRaises(AttributeError):
+            self.graph.add_edge(distance=5, weight=15, cable=self.cable1)
+
     # def test_add_edge_invalid_vertex(self):
     #     with self.assertRaises(AttributeError):  # Or KeyError, depending on your implementation
     #         self.graph.add_edge("A", "D", 5, 15, self.cable1)

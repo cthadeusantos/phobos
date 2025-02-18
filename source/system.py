@@ -10,6 +10,7 @@ class System(Graph):
         Returns:
             None
         """
+        super().__init__()
         self.root = root
 
     @property
@@ -17,12 +18,15 @@ class System(Graph):
         return self._root
 
     @root.setter
-    def root(self, value):
-        if not (isinstance(value, int) or isinstance(value, str)):
-            raise TypeError("root needs to be an integer")
-        if value < 0:
-            raise ValueError("root can be a non negative value.")
-        self._root = float(value)
+    def root(self, value=None):
+        if value is not None:
+            if not isinstance(value, (int, str)):
+                raise TypeError("Invalid root value")
+
+            if isinstance(value, int) and value < 0:
+                raise ValueError("root must be a non-negative integer.")
+
+        self._root = value
 
     def unbalance(self, Ia=None, Ib=None, Ic=None):
         if Ic is not None:  # Ver documento cemig nd3_1_000001p.pdf
@@ -31,3 +35,6 @@ class System(Graph):
                             )/ (Ia + Ib + Ic)) * 100
         else:   # Ver documento cemig nd3_1_000001p.pdf
             des1F_percentual = (2 * (Ia - Ib) / (Ia + Ib)) * 100
+
+    def __str__(self):
+        return f"System: {self.root}"

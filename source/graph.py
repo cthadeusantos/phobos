@@ -26,18 +26,25 @@ class Graph:
         vertex = vertex or Vertex()
         self.vertices[vertex.tag] = vertex
 
-    def add_edge(self, source, target, weight=0, distance=0, cable=None):
+    def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None):
         """Add an edge to the graph.
 
         Returns:
             None
         """
+        if source is None or target is None:
+            raise AttributeError("Invalid input!")
         edge = Edge(weight, distance, cable=cable)
         if source in self.vertices and target in self.vertices:
             self.vertices[source].add_edge(self.vertices[target], edge)
             self.vertices[target].add_edge(self.vertices[source], edge)
         else:
-            if source not in self.vertices: # If source not exists , add it
+            if source not in self.vertices and target not in self.vertices: # If source not exists , add it
+                self.addVertex(Vertex(source))
+                self.addVertex(Vertex(target))
+                self.vertices[source].add_edge(self.vertices[target], edge)
+                self.vertices[target].add_edge(self.vertices[source], edge)
+            elif source not in self.vertices: # If source not exists , add it
                 self.addVertex(Vertex(source))
                 self.vertices[source].add_edge(self.vertices[target], edge)
                 self.vertices[target].add_edge(self.vertices[source], edge)
@@ -232,6 +239,10 @@ class Graph:
         self.vertices[new] = vertex  # Add the vertex to the dictionary with the new tag
         # self.vertices.pop(old, None)
         del self.vertices[old]       # Remove the entry with the old tag (more efficient than pop)
+
+    def show_adjacency_list(self):
+        for vertice in self.vertices.values():
+            print(vertice.tag, vertice.get_neighbors_tag())
 
     def __str__(self):
         grafo_str = ""
