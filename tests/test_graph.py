@@ -98,7 +98,40 @@ class TestGraph(unittest.TestCase):
         self.graph.remove_edge('C', 'D')
         self.assertEqual(self.graph.get_num_edges(), 2)
 
+    def test_bfs_and_dfs(self):
+        self.v4 = Vertex("D", 40)
+        self.v5 = Vertex("E", 50)
+        self.v6 = Vertex("F", 60)
+        self.v7 = Vertex("G", 60)
+        self.v8 = Vertex("H", 60)
+        self.graph.addVertex(self.v4)
+        self.graph.addVertex(self.v5)
+        self.graph.addVertex(self.v6)
+        self.graph.addVertex(self.v7)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
+        self.graph.add_edge("C", "D", 7, 17, self.cable2)
+        self.graph.add_edge("D", "E", 8, 18, self.cable2)
+        self.graph.add_edge("B", "F", 9, 19, self.cable2)
+        self.graph.add_edge("F", "G", 9, 19, self.cable2)
+        self.graph.add_edge("B", "H", 9, 19, self.cable2)
 
+        self.assertEqual(self.graph.BFS('A'), ['A', 'B', 'C', 'F', 'H', 'D', 'G', 'E'])
+        self.assertEqual(self.graph.DFS('A'), ['A', 'B', 'F', 'G', 'H', 'C', 'D', 'E'])
+
+    def test_rename_vertex(self):
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
+        self.graph.rename_vertex('A', 'Z')
+        self.assertEqual(self.graph.tag_adjacency_vertex_list(), ['B', 'C', 'Z'])
+
+        with self.assertRaises(ValueError):
+            self.graph.rename_vertex('X')
+            self.graph.rename_vertex('Z', 'F')
+            self.graph.rename_vertex('A', 'B')
+
+        with self.assertRaises(TypeError):
+            self.graph.rename_vertex('A', Vertex)
 
 if __name__ == '__main__':
     unittest.main()

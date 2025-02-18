@@ -5,18 +5,37 @@ from source.edge import Edge
 # This class represents a vertex
 # Parameters
 # tag is a string or integer
-# weight is a integer
+# weight is a float
 class Vertex:
     def __init__(self, tag=None, weight=0):
-        if tag is None:
-            tag = str(hex(random.randint(1,16777215))).replace('0x','')
         self.tag = tag
         self.weight = weight
         self.neighbors = {}  # Dicionário para armazenar edges (vizinhos) e suas arestas
 
-    # Return an integer that represents a weight's vertex
-    def get_weight(self):
-        return self.weight
+    @property
+    def tag(self):
+        return self._tag
+
+    @tag.setter
+    def tag(self, value):
+        if value is None:
+            value = str(hex(random.randint(1,16777215))).replace('0x','')
+        self._tag = value
+
+    @property
+    def weight(self):
+        return self._weight
+
+    @weight.setter
+    def weight(self, value):
+        if not (isinstance(value, int) or isinstance(value, float)):
+            raise TypeError("Weight needs to be a number")
+        if value < 0:
+            raise ValueError("Weight can be a non negative value.")
+        self._weight = float(value)
+
+    # def set_tag(self, value):
+    #     self.tag = value
 
     # Add a new edge between self and target vertices
     def add_edge(self, target, edge):

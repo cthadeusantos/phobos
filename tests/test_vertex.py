@@ -25,7 +25,7 @@ class TestVertex(unittest.TestCase):
         self.assertEqual(self.vertex.get_edge(other_vertex), edge) # Check if edge is correct
 
     def test_vertex_string_representation(self):
-        self.assertEqual(str(self.vertex), "Vertex: A (Weight: 10)")
+        self.assertEqual(str(self.vertex), "Vertex: A (Weight: 10.0)")
 
     def test_add_edge_existing_neighbor(self):
         other_vertex = Vertex("B", 20)

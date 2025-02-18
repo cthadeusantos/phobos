@@ -1,11 +1,18 @@
 from collections import defaultdict
 from queue import Queue
+from collections import deque 
 
 from source.edge import Edge
 from source.vertex import Vertex
 
 class Graph:
+    
     def __init__(self):
+        """ Constructor
+
+        Returns:
+            None
+        """
         self.vertices = {}  # Dicionário para armazenar vértices
 
     def addVertex(self, vertex=None):
@@ -38,15 +45,6 @@ class Graph:
                 self.addVertex(Vertex(target))
                 self.vertices[source].add_edge(self.vertices[target], edge)
                 self.vertices[target].add_edge(self.vertices[source], edge)
-            # else:
-            #     raise AttributeError("Vertice(s) not found.")
-
-    # def adjacency_vertex_list(self, source=None):
-    #     #return [neighbor for neighbor in self.vertices[source].neighbors]
-    #     if source is not None:
-    #         return list(self.vertices[source].neighbors.keys())
-    #     else:
-    #         raise AttributeError("Vertice(s) not found.")
         
     def tag_adjacency_vertex_list(self, source=None):
         """Get the adjacency list from graph.
@@ -74,13 +72,6 @@ class Graph:
                 raise AttributeError("Vertice(s) not found.")
         return [tag for tag in self.vertices.keys()]
 
-    
-    # def adjacency_list(self):
-    #     adjacency_list = {}
-    #     for vertex in list(self.vertices.keys()):
-    #         adjacency_list[vertex] = self.adjacency_vertex_list(vertex)
-    #     return adjacency_list
-
     def has_edge(self, source, target):
         """Check if there is an edge between vertices source and target at graph.
 
@@ -105,30 +96,22 @@ class Graph:
         """
         return sum(vertex.get_num_edges(vertex_id) for vertex_id, vertex in self.vertices.items()) // 2
 
-    # def get_edges(self, source=None):
-    #     if source is not None:
-    #         for vertex, edge in self.vertices[source].neighbors.items():
-    #             self.remove_edge(vertex.tag, source)
-    #     pass
-
-
     def remove_vertex(self, source=None):
+        """Remove a vertex and your edges from graph.
+
+        Returns:
+            None
+        """
         if source is None:
             raise AttributeError("Invalid vertex!")
         
         tag_vertex_list = self.tag_adjacency_vertex_list(source)
         instance_source = self.vertices[source]
         for tag in tag_vertex_list:
-            self.vertices[tag].neighbors.pop(instance_source, None)
-        self.vertices.pop(source, None)
-
-    # def remove_edge(self, source, target):
-    #     if source is None or target is None or source not in self.tag_adjacency_vertex_list() or target not in self.tag_adjacency_vertex_list():
-    #         raise AttributeError("Invalid vertice(s)!")
-    #     instance_source = self.vertices[source]
-    #     instance_target = self.vertices[target]
-    #     self.vertices[source].neighbors.pop(instance_target, None)
-    #     self.vertices[target].neighbors.pop(instance_source, None)
+            # self.vertices[tag].neighbors.pop(instance_source, None)
+            del self.vertices[tag].neighbors[instance_source]   # Remove the entry with the old tag (more efficient than pop)
+        #self.vertices.pop(source, None)
+        del self.vertices[source]   # Remove the entry with the old tag (more efficient than pop)
 
     def remove_edge(self, source, target):
         """Removes an edge between two vertices.
@@ -147,8 +130,108 @@ class Graph:
         if source not in self.vertices or target not in self.vertices:
             raise ValueError("Invalid vertex tag(s).")
 
-        self.vertices[source].neighbors.pop(self.vertices[target], None)
-        self.vertices[target].neighbors.pop(self.vertices[source], None)
+        # self.vertices[source].neighbors.pop(self.vertices[target], None)
+        # self.vertices[target].neighbors.pop(self.vertices[source], None)
+        del self.vertices[source].neighbors[self.vertices[target]]  # Remove the entry with the old tag (more efficient than pop)
+        del self.vertices[target].neighbors[self.vertices[source]]  # Remove the entry with the old tag (more efficient than pop)
+
+    def BFS(self, start, array=None):
+        """Performs a Breadth-First Search (BFS) on the graph.
+
+        Args:
+            start: The starting vertex (can be an integer or a string).
+            array: An optional list to store the visited vertices. If None, a new list is created.
+
+        Returns:
+            list: A list of visited vertices in the order they were visited.
+        
+        Raises:
+            ValueError: If the starting vertex is not found in the graph.
+        """
+
+        if array is None:
+            array = []
+
+        if start not in self.vertices:  # Check if the starting vertex exists
+            raise ValueError(f"Starting vertex '{start}' not found in the graph.")
+
+        visited = {vertex: False for vertex in self.vertices} # Use a dictionary for flexibility
+        queue = deque([start])  # Use deque for efficiency and initialize with the start vertex
+        visited[start] = True
+
+        while queue:
+            vertex = queue.popleft()  # Get the next vertex from the queue
+            array.append(vertex)  # Append the visited vertex
+            for neighbor in self.tag_adjacency_vertex_list(vertex):  # Iterate through the neighbors
+                if not visited[neighbor]:
+                    queue.append(neighbor)  # Add unvisited neighbors to the queue
+                    visited[neighbor] = True  # Mark the neighbor as visited
+
+        return array
+
+    def DFS(self, start, visited=None, array=None):
+        """Performs a Depth-First Search (DFS) on the graph.
+
+        Args:
+            start: The starting vertex (can be an integer or a string).
+            visited: An optional set to keep track of visited vertices. If None, a new set is created.
+            array: An optional list to store the visited vertices in order. If None, a new list is created.
+
+        Raises:
+            ValueError: If the starting vertex is not found in the graph.
+
+        Returns:
+            list: A list of visited vertices in the order they were visited.
+        """
+
+        if visited is None:
+            visited = set()
+        if array is None:
+            array = []
+
+        if start not in self.vertices:
+            raise ValueError(f"Starting vertex '{start}' not found in the graph.")
+
+        visited.add(start)
+        array.append(start)  # Add the vertex to the array *before* the recursive calls
+
+        for neighbor in self.tag_adjacency_vertex_list(start):
+            if neighbor not in visited:
+                self.DFS(neighbor, visited, array)  # Pass the array to recursive calls
+
+        return array
+    
+    def rename_vertex(self, old=None, new=None):
+        """Renames a vertex in the graph.
+
+        Args:
+            old: The current tag of the vertex.
+            new: The new tag for the vertex.
+
+        Raises:
+            TypeError: If either vertex tag is not a string or an integer.
+            ValueError: If either vertex tag is None or the old tag is not found.
+        """
+
+        if old is None or new is None:
+            raise ValueError("Vertex tags cannot be None.")
+
+        if not isinstance(old, (int, str)) or not isinstance(new, (int, str)):
+            raise TypeError("Vertex tags must be integers or strings.")
+
+        if old not in self.vertices:
+            raise ValueError(f"Vertex with tag '{old}' not found.")
+        
+        if new in self.vertices:
+            raise ValueError(f"Vertex with tag '{new}' already exist.")
+
+        vertex = self.vertices[old]     # Get the vertex instance
+        #vertex.set_tag(new)            # Update the vertex's tag
+        vertex.tag = new                # Update the vertex's tag
+
+        self.vertices[new] = vertex  # Add the vertex to the dictionary with the new tag
+        # self.vertices.pop(old, None)
+        del self.vertices[old]       # Remove the entry with the old tag (more efficient than pop)
 
     def __str__(self):
         grafo_str = ""
@@ -157,92 +240,3 @@ class Graph:
             for neighbor, edge in vertice.neighbors.items():
                 grafo_str += f"  -> {neighbor}: {edge}\n"
         return grafo_str
-
-# # This class represents a undirect graph
-# # using adjacency list
-# class Graph:
-
-#     """
-#     Constructor
-#     """
-#     def __init__(self):
-
-#         # Default dictionary to store a graph
-#         self.graph = defaultdict(list)
-
-#     """
-#     Add an edge to graph
-#     """
-#     def add_edge(self, u, v, **kwargs):
-#         if not self.has_edge(u, v):
-#             self.graph[u].append(v)
-#             self.graph[v].append(u)
-
-#     def removeEdge(self, u, v):
-#         if self.has_edge(u, v) and self.has_edge(v, u):
-#             self.graph[u].remove(v)
-#             self.graph[v].remove(u)
-    
-#     # def removeVertex(self,u):
-#     #     for v in self.graph[u]:
-#     #         self.removeEdge(u, v)
-#     #     del self.graph[u]
-
-#     def has_edge(self, u, v):
-#         return v in self.graph[u] and u in self.graph[v]
-    
-#     def getNumVertices(self):
-#         return max(self.graph)
-
-#     def elements(self):
-#         return max(self.graph)
-
-#     def __str__(self):
-#         string = ''
-#         for x in self.graph:
-#             string += f'{x}:{self.graph[x]}\n'
-#         return string
-
-#     def BFS(self, start):
-        
-#         visited = [False] * (max(self.graph) + 1)   # Mark all vertices as not visited
-        
-#         queue = Queue() # Create queue for BFS
-
-#         queue.put(start)
-#         visited[start] = True
-#         while not queue.empty():
-#             start = queue.get()
-#             print(start, end=" ")
-#             for i in self.graph[start]:
-#                 if not visited[i]:
-#                     queue.put(i)
-#                     visited[i] =  True
-
-#     # def DFS(self, start):
-#     #     visited = [False] * (max(self.graph) + 1)
-#     #     stack = []  # Use a list as a stack
-
-#     #     stack.append(start)  # Use append() to push onto the stack
-
-#     #     while stack:
-#     #         start = stack.pop()  # Use pop() to pop from the stack
-
-#     #         if not visited[start]:
-#     #             print(start, end=" ")
-#     #             visited[start] = True
-
-#     #             # Note: Reverse the order of neighbors to maintain DFS order
-#     #             for neighbor in reversed(self.graph[start]):  # Corrected this line
-#     #                 if not visited[neighbor]:
-#     #                     stack.append(neighbor)
-
-#     def DFS(self, start, visited=None):
-#         if visited is None:
-#             visited = set()
-#         visited.add(start)
-#         #print(start, end=" ")
-
-#         for neighbor in self.graph[start]:
-#             if neighbor not in visited:
-#                 self.DFS(neighbor, visited)
