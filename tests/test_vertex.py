@@ -40,9 +40,17 @@ class TestVertex(unittest.TestCase):
         self.assertIn(edge1, self.vertex.get_edges())
         self.assertNotIn(edge1, other_vertex.get_edges())
 
-    def test_add_edge_invalid_input(self):
+    def test_update_vertex(self):
+        self.vertex.update_vertex(tag="A", weight=15)
+        self.assertEqual(self.vertex.tag, "A")
+        self.assertEqual(self.vertex.weight, 15)
+
         with self.assertRaises(TypeError):
-            self.vertex.add_edge("Not a vertex", "Not an edge")
+            self.vertex.update_vertex(Vertex(), weight=15)
+        with self.assertRaises(TypeError):
+            self.vertex.update_vertex(tag='A', weight='A')
+        with self.assertRaises(ValueError):
+            self.vertex.update_vertex(tag='D', weight=10)
 
 
 if __name__ == '__main__':

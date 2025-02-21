@@ -5,17 +5,141 @@ from source.vertex import Vertex
 
 class TestSystem(unittest.TestCase):
 
-    def test_root_setter(self):
-        system = System()
-        system.root = 10
-        self.assertIsInstance(system.root, int)
-        self.assertEqual(system.root, 10)
+    def setUp(self):
+        #return super().setUp()
+        self.system = System()
+        #self.system2 = System()
 
-        system.root = "A"
-        self.assertIsInstance(system.root, str)
-        self.assertEqual(system.root, 'A')
-        
+    def test_add_vertex(self):
+        vertex1 = self.system.add_vertex('A', 0, (1, 2), 3)
+        vertex2 = self.system.add_vertex('B', 5, (6, 7), 8)
+
+        self.assertEqual(self.system.get_vertex_weight('A'), 0)
+        self.assertEqual(self.system.get_coordinates('A'), (1, 2))
+        self.assertEqual(self.system.get_payload('A'), 3)
+        self.assertEqual(self.system.get_vertex_weight('B'), 5)
+        self.assertEqual(self.system.get_coordinates('B'), (6,7))
+        self.assertEqual(self.system.get_payload('B'), 8)
+
         with self.assertRaises(TypeError):
-            system.root = Vertex()  # Tentativa de atribuir uma string não numérica
+            self.system.add_vertex('C', 0, (0, Vertex()), 3)  # Tentativa de atribuir uma string não numérica
+        with self.assertRaises(TypeError):
+            self.system.add_vertex('D', (0, Vertex()), 0, 3)  # Tentativa de atribuir uma string não numérica
+        with self.assertRaises(TypeError):
+            self.system.add_vertex('E', 0, (0, 0), Vertex())  # Tentativa de atribuir uma string não numérica
         with self.assertRaises(ValueError):
-            system.root = -5  # Tentativa de atribuir um valor negativo
+            self.system.add_vertex('F', 0, (0, 0), -1)  # tentativa de atribuir um número negativo a payload
+
+    def test_update_vertex(self):
+        self.system.add_vertex('Z', 10, (1, 2), 3)
+        self.system.update_vertex('Z', coordinates=(5, 10), payload=15, weight=20)
+        self.assertEqual(self.system.get_coordinates('Z'), (5, 10))
+        self.assertEqual(self.system.get_payload('Z'), 15)
+        self.assertEqual(self.system.get_vertex_weight('Z'), 20)
+        with self.assertRaises(ValueError):
+            self.system.update_vertex('W', coordinates=(5, 10), payload=15, weight=20)
+        with self.assertRaises(ValueError):
+            self.system.update_vertex(coordinates=(5, 10), payload=15, weight=20)
+        with self.assertRaises(ValueError):
+            self.system.update_vertex('Z', coordinates=(5, 10), payload=-15, weight=20)
+        with self.assertRaises(ValueError):
+            self.system.update_vertex('Z', coordinates=(5, 10), payload=15, weight=-20)
+        with self.assertRaises(TypeError):
+            self.system.update_vertex(Vertex(), coordinates=(5, 10), payload=15, weight=20)
+
+    def test_add_edge(self):
+        # self.system.add_edge('A','B', 0, 10)
+        self.system.add_edge('A','B', 10, 20, coord_source=(5, 7), coord_target=(10, 9))
+        self.assertEqual(self.system.get_coordinates('A'), (5, 7))
+        self.assertEqual(self.system.get_coordinates('B'), (10, 9))
+        self.assertEqual(self.system.get_edge_weight('A', 'B'), 10)
+
+        with self.assertRaises(ValueError): # Tentativa de adicionar uma aresta já existente
+            self.system.add_edge('A','B', 10, 20, coord_source=(5, 7), coord_target=(10, 9))
+
+    def test_update_edge(self):
+        self.system.add_edge('A','B', 10, 20, coord_source=(5, 7), coord_target=(10, 9))
+        self.system.update_edge('A','B', 20, 30, coord_source=(5, 7), coord_target=(10, 9))
+        self.assertEqual(self.system.get_coordinates('A'), (5, 7))
+        self.assertEqual(self.system.get_coordinates('B'), (10, 9))
+        self.assertEqual(self.system.get_edge_weight('A', 'B'), 20)
+
+        with self.assertRaises(ValueError):
+            self.system.update_edge('A','C', 20, 30, coord_source=(5, 7), coord_target=(10, 9))
+
+        with self.assertRaises(TypeError):
+            self.system.update_edge('A','B', 20, 30, coord_source=Vertex(), coord_target=(10, 9))
+
+        with self.assertRaises(TypeError):
+            self.system.update_edge('A','B', 20, 30, coord_source=(10, 9), coord_target=Vertex())
+
+        with self.assertRaises(TypeError):
+            self.system.update_edge('A','B', 20, 30, coord_source=("10", 9), coord_target=(5,7))
+
+        with self.assertRaises(TypeError):
+            self.system.update_edge('A','B', 20, 30, coord_source=(10, 9), coord_target=(5,'7'))
+    
+    def test_reset(self):
+        self.system = self.system.reset()
+        self.assertEqual(self.system.vertices, {})
+
+    def test_root(self):
+        self.system.root = 10
+        self.assertIsInstance(self.system.root, int)
+        self.assertEqual(self.system.root, 10)
+        
+        with self.assertRaises(ValueError):
+            self.system.root = -5  # Tentativa de atribuir um valor negativo
+
+        with self.assertRaises(TypeError):
+            self.system.root = Vertex()  # Tentativa de atribuir um valor negativo
+
+        # self.system.add_edge('A','B', 0, 10)
+        # self.system.add_edge('A','C', 0, 20)
+        # self.system.add_edge('C','D', 0, 30)
+        # self.system.add_edge('D','F', 0, 40)
+        # self.system.add_edge('E','B', 0, 50)
+        # self.system.add_edge('E','G', 0, 60)
+
+    # def test_system_creation(self):
+    #     self.assertEqual(self.system2.vertices, {})
+
+    # def test_root_setter(self):
+    #     self.system2.root = 10
+    #     self.assertIsInstance(self.system2.root, int)
+    #     self.assertEqual(self.system2.root, 10)
+
+    #     self.system2.root = "A"
+    #     self.assertIsInstance(self.system2.root, str)
+    #     self.assertEqual(self.system2.root, 'A')
+        
+    #     with self.assertRaises(TypeError):
+    #         self.system2.root = Vertex()  # Tentativa de atribuir uma string não numérica
+    #     with self.assertRaises(ValueError):
+    #         self.system2.root = -5  # Tentativa de atribuir um valor negativo
+
+
+    
+    def test_expert_DFS(self):
+        self.system.reset()
+        self.system.add_edge('A','B', 10, 10)
+        self.system.add_edge('A','C', 20, 20)
+        self.system.add_edge('C','D', 30, 30)
+        self.system.add_edge('D','F', 40, 40)
+        self.system.add_edge('E','B', 50, 50)
+        self.system.add_edge('E','G', 60, 60)
+
+        self.system.update_vertex('A', weight=4)
+        self.system.update_vertex('B', weight=8)
+        self.system.update_vertex('C', weight=16)
+        self.system.update_vertex('D', weight=32)
+        self.system.update_vertex('E', weight=64)
+        self.system.update_vertex('F', weight=128)
+        self.system.update_vertex('G', weight=256)
+        #cargas = self.system.expert_DFS('A')
+        cargas = self.system.accumulate_payload('A')
+        self.assertEqual(cargas, {'A': 508, 'B': 328, 'C': 176, 'D': 160, 'F': 128, 'E': 320, 'G': 256})   
+
+
+    # def test_build_tree(self):
+    #     self.assertEqual(self.system.adjacency_list(),{'A': ['B', 'C'], 'B': ['A', 'E'], 'C': ['A', 'D'], 'D': ['C', 'F'], 'F': ['D'], 'E': ['B', 'G'], 'G': ['E']})
