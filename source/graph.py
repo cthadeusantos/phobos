@@ -5,8 +5,6 @@ from collections import deque
 from source.edge import Edge
 from source.vertex import Vertex
 
-
-
 class Graph:
 
     class Sentinel:
@@ -21,6 +19,7 @@ class Graph:
             None
         """
         self.vertices = {}  # Dicionário para armazenar vértices
+        self.reverse_vertices = {}
 
     def get_vertex_weight(self, vertex):
         """Get the weight of a vertex.
@@ -84,6 +83,7 @@ class Graph:
                 raise ValueError("Vertex already exists!")
             vertex = vertex
         self.vertices[vertex.tag] = vertex
+        self.reverse_vertices[vertex] = [vertex.tag]
 
     def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None):
         """Add an edge to the graph.
@@ -357,6 +357,34 @@ class Graph:
         for vertice in self.vertices.values():
             adj_list[vertice.tag] = vertice.get_neighbors_tag()
         return adj_list
+
+    ### NAO ESTA TERMINADA, FALTA PREPARAR PARA CASO O VERTICE ESTEJA DESCONECTADO DO GRAFO
+    def is_leaf(self, vertex):
+        """Verifica se um vértice é folha (não tem filhos)."""
+        neighbors = self.tag_adjacency_vertex_list(vertex)
+        #return len(neighbors) == 0  # Se não tiver vizinhos, é folha.
+        return len(neighbors) - 1 == 0  # Se não tiver vizinhos, é folha.
+    
+    def check_vertex_is_valid(self, vertex):
+        if vertex is None:
+            raise ValueError("Vertex cannot be None")
+        elif not isinstance(vertex, (str, int)):
+            raise TypeError("Tag must be a string or an integer")
+        elif vertex not in self.vertices:
+            raise ValueError("Vertex not found")
+        
+    def get_data(self):
+        data ={}
+        for key in self.vertices:
+            data[key] = self.vertices[key].get_data()
+            data[key]['neighbors'] = []
+            for key1, value in self.vertices[key].neighbors.items():
+                if key1 in self.reverse_vertices:
+                    tag = self.reverse_vertices[key1][0]
+                    data[key]['neighbors'].append({'vertex': tag, 'weight': self.vertices[key].neighbors[key1].weight,
+                    'distance': self.vertices[key].neighbors[key1].distance })
+        print(data)
+        return data
 
     def __str__(self):
         grafo_str = ""

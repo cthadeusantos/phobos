@@ -9,16 +9,23 @@ class System(Graph):
     class Sentinel(Graph.Sentinel):  # Herda de Graph.Sentinel
             pass
 
-    def __init__(self, root=None, vpp=None, vpn=None):
+    def __init__(self, root=None, vpp=None, vpn=None, power_factor=None, data=None):
         """ Constructor
 
         Returns:
             None
         """
         super().__init__()
-        self.root = root
-        self.eletrical = ElectricalHandler(vpp, vpn)
-        self.extra = {}
+        if data is None:
+            self.root = root
+            self.power_factor = power_factor
+            self.eletrical = ElectricalHandler(vpp, vpn)
+            self.extra = {}
+        else:
+            self.root = data.get('root', None)
+            self.vpp = data.get('vpp', None)
+            self.vpn = data.get('vpn', None)
+            self.power_factor = data.get('power_factor', None)
 
     class VertexExtraAttributes:
         def __init__(self, coordinates=(0,0), payload=0):
@@ -45,6 +52,7 @@ class System(Graph):
 
         @property
         def payload(self):
+            """ load accumulated at the point """
             return self._payload
 
         @payload.setter
@@ -58,6 +66,48 @@ class System(Graph):
                 if isinstance(value, (int, float)) and value < 0:
                     raise ValueError("Payload must be a non-negative integer.")
             self._payload = value
+
+    @property
+    def power_factor(self):
+        return self._power_factor
+
+    @power_factor.setter
+    def power_factor(self, value=None):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError("Invalid power factor value")
+
+            if value <= 0 or value > 1:
+                raise ValueError("Power factor must be between 0 and 1.")
+        self._power_factor = value
+
+    @property
+    def vpp(self):
+        return self._vpp
+
+    @vpp.setter
+    def vpp(self, value=None):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError("Invalid power factor value")
+
+            if value < 0:
+                raise ValueError("Vpp must be between greater than 0")
+        self._vpp = value
+
+    @property
+    def vpn(self):
+        return self._vpn
+
+    @vpn.setter
+    def vpn(self, value=None):
+        if value is not None:
+            if not isinstance(value, (int, float)):
+                raise TypeError("Invalid power factor value")
+
+            if value < 0:
+                raise ValueError("Vpn must be between greater than 0")
+        self._vpn = value
 
     @property
     def root(self):
@@ -87,13 +137,8 @@ class System(Graph):
         return self.root
 
     def check_vertex_is_valid(self, vertex):
-        if vertex is None:
-            raise ValueError("Vertex cannot be None")
-        elif not isinstance(vertex, (str, int)):
-            raise TypeError("Tag must be a string or an integer")
-        elif vertex not in self.vertices:
-            raise ValueError("Vertex not found")
-        elif vertex not in self.extra:
+        super().check_vertex_is_valid(vertex)
+        if vertex not in self.extra:
             raise ValueError("Vertex not found")       
 
     def get_coordinates(self, vertex=None):
@@ -116,7 +161,7 @@ class System(Graph):
             super().update_vertex(tag, weight)
 
     ## FUNCAO PARA SER REFATORADA NO FUTURO
-    ## FUI AJUSTANDO E FIQUEI DE SACO CHEIO PQ PRECISO FECHAR A funcao expert_DFS
+    ## FUI AJUSTANDO E FIQUEI DE SACO CHEIO PQ PRECISO FECHAR A funcao DFS_expert
     def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None, coord_source=None, coord_target=None):
         if source in self.vertices and target in self.vertices:
             raise ValueError("Edge already exists")
@@ -159,9 +204,9 @@ class System(Graph):
         self.extra[source] = self.VertexExtraAttributes(coordinates=coord_source)
         self.extra[target] = self.VertexExtraAttributes(coordinates=coord_target)
 
-    #def expert_DFS(self, start=None, visited=None):
-    def expert_DFS(self, start=None, visited=None):
-        """Executa DFS e calcula a soma das cargas nos vértices."""
+    #def DFS_expert(self, start=None, visited=None):
+    def DFS_expert(self, start=None, visited=None):
+        """Executa DFS e calcula a soma das cargas nos vértices e nas arestas."""
 
         if visited is None:
             visited = set()
@@ -183,7 +228,7 @@ class System(Graph):
 
         for neighbor in self.tag_adjacency_vertex_list(start):
             if neighbor not in visited:
-                self.expert_DFS(neighbor, visited)
+                self.DFS_expert(neighbor, visited)
                 # Acumula a carga dos filhos no vértice pai
                 value = self.extra[neighbor].payload
                 if value is None:
@@ -191,16 +236,15 @@ class System(Graph):
                 if self.extra[start].payload is None:
                     self.extra[start].payload = 0
                 self.extra[start].payload +=  self.extra[neighbor].payload # Atualiza a carga do vértice pai
-                # if self.is_leaf(neighbor):
-                #     self.extra[start].payload += self.get_edge_weight(start, neighbor)
-
+                if not self.is_leaf(start):
+                    self.extra[start].payload += self.get_edge_weight(start, neighbor)
         return self.extra
     
     def accumulate_payload(self, vertex=root):
-        """Executa DFS e calcula a soma das cargas nos vértices."""
+        """Executa DFS_expert e retorna um dicionário com as cargas acumuladas."""
         if vertex is None:
             raise ValueError("Root vertex cannot be None.")
-        cargas = self.expert_DFS(vertex)
+        cargas = self.DFS_expert(vertex)
         payload = {}
         for key, value in cargas.items():
             payload[key] = value.payload      
@@ -210,19 +254,13 @@ class System(Graph):
         """Retorna a carga de um vértice."""
         return self.vertices[vertex].weight
 
-    # def currente_node(self, cable, edge):
-    #     pass
-
-    def is_leaf(self, vertex):
-        """Verifica se um vértice é folha (não tem filhos)."""
-        # Sua lógica aqui para verificar se um vértice é folha.
-        # Exemplo:
-        neighbors = self.tag_adjacency_vertex_list(vertex)
-        #return len(neighbors) == 0  # Se não tiver vizinhos, é folha.
-        return len(neighbors) == 1  # Se não tiver vizinhos, é folha.
-
     def reset(self):
+        """Reset the instance of System"""
         return System()
+
+    def get_data(self):
+        for key, value in self.vertices:
+            print(self.vertices[key], value)
 
     def __str__(self):
         return f"System: {self.root}"

@@ -94,6 +94,46 @@ class TestSystem(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.system.root = Vertex()  # Tentativa de atribuir um valor negativo
 
+    def test_power_factor(self):
+        self.system.power_factor = 1
+        self.assertIsInstance(self.system.power_factor, int)
+        self.assertEqual(self.system.power_factor, 1)
+        self.system.power_factor = .5
+        self.assertIsInstance(self.system.power_factor, float)
+        self.assertEqual(self.system.power_factor, .5)
+        
+        with self.assertRaises(ValueError):
+            self.system.power_factor = 2.3  # Tentativa de atribuir um valor negativo
+
+        with self.assertRaises(TypeError):
+            self.system.power_factor = (1,4)  # Tentativa de atribuir um valor negativo
+
+    def test_vpp(self):
+        self.system.vpp = 220
+        self.assertIsInstance(self.system.vpp, int)
+        self.assertEqual(self.system.vpp, 220)
+        self.system.vpp = 127.5
+        self.assertIsInstance(self.system.vpp, float)
+        self.assertEqual(self.system.vpp, 127.5)
+        
+        with self.assertRaises(ValueError):
+            self.system.vpp = -6.3  # Tentativa de atribuir um valor negativo
+        with self.assertRaises(TypeError):
+            self.system.vpn = (1,4)  # Tentativa de atribuir um tipo invalido
+            
+    def test_vpn(self):
+        self.system.vpn = 220
+        self.assertIsInstance(self.system.vpn, int)
+        self.assertEqual(self.system.vpn, 220)
+        self.system.vpn = 127.5
+        self.assertIsInstance(self.system.vpn, float)
+        self.assertEqual(self.system.vpn, 127.5)
+        
+        with self.assertRaises(ValueError):
+            self.system.vpn = -6.3  # Tentativa de atribuir um valor negativo
+        with self.assertRaises(TypeError):
+            self.system.vpn = (1,4)  # Tentativa de atribuir um tipo invalido
+
         # self.system.add_edge('A','B', 0, 10)
         # self.system.add_edge('A','C', 0, 20)
         # self.system.add_edge('C','D', 0, 30)
@@ -120,7 +160,7 @@ class TestSystem(unittest.TestCase):
 
 
     
-    def test_expert_DFS(self):
+    def test_DFS_expert(self):
         self.system.reset()
         self.system.add_edge('A','B', 10, 10)
         self.system.add_edge('A','C', 20, 20)
@@ -128,6 +168,7 @@ class TestSystem(unittest.TestCase):
         self.system.add_edge('D','F', 40, 40)
         self.system.add_edge('E','B', 50, 50)
         self.system.add_edge('E','G', 60, 60)
+        self.system.add_edge('D','H', 110, 60)
 
         self.system.update_vertex('A', weight=4)
         self.system.update_vertex('B', weight=8)
@@ -136,10 +177,10 @@ class TestSystem(unittest.TestCase):
         self.system.update_vertex('E', weight=64)
         self.system.update_vertex('F', weight=128)
         self.system.update_vertex('G', weight=256)
-        #cargas = self.system.expert_DFS('A')
+        self.system.update_vertex('H', weight=512)
+        #cargas = self.system.DFS_expert('A')
         cargas = self.system.accumulate_payload('A')
-        self.assertEqual(cargas, {'A': 508, 'B': 328, 'C': 176, 'D': 160, 'F': 128, 'E': 320, 'G': 256})   
-
+        self.assertEqual(cargas, {'A': 1340, 'B': 438, 'C': 868, 'D': 822, 'F': 128, 'E': 380, 'G': 256, 'H': 512})   
 
     # def test_build_tree(self):
     #     self.assertEqual(self.system.adjacency_list(),{'A': ['B', 'C'], 'B': ['A', 'E'], 'C': ['A', 'D'], 'D': ['C', 'F'], 'F': ['D'], 'E': ['B', 'G'], 'G': ['E']})

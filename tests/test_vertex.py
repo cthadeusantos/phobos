@@ -52,6 +52,19 @@ class TestVertex(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.vertex.update_vertex(tag='D', weight=10)
 
+    def test_get_data(self):
+        other_vertex = Vertex("B", 20)
+        other_vertex2 = Vertex("C", 20)
+        edge1 = Edge(5, 15)
+        edge2 = Edge(8, 20)
+        self.vertex.add_edge(other_vertex, edge1)
+        self.vertex.add_edge(other_vertex, edge2)  # Add another edge to the same neighbor
+        self.vertex.add_edge(other_vertex2, edge1)
+    
+        self.assertEqual(self.vertex.get_data(),  {'weight': 10})
+        self.assertEqual(other_vertex.get_data(),  {'weight': 20})
+        self.assertEqual(other_vertex2.get_data(), {'weight': 20})
+
 
 if __name__ == '__main__':
     unittest.main()

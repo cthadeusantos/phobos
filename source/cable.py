@@ -1,4 +1,6 @@
 from random import randint
+import math
+import sqlite3
 
 class Cable:
     def __init__(self, tipo=None, resistance=0.0, reactance=0.0):
@@ -47,6 +49,24 @@ class Cable:
         if value < 0:
             raise ValueError("Reactance must be non-negative.")
         self._reactance = float(value) # Armazena sempre como float
+
+    def impedance(self, power_factor=1.0):
+        if not isinstance(power_factor, (int, float)):  # Aceita int ou float
+            raise TypeError("Power factor must be a number (int or float).")
+        if power_factor < 0 or power_factor > 1:
+            raise ValueError("The power factor value must be between 0 and 1.")
+        angle = math.acos(power_factor)
+        cos_phi = math.cos(angle)
+        sin_phi = math.sin(angle)
+        return self.resistance * cos_phi + self.reactance * sin_phi
+
+    def pf_angle_degree(self, power_factor=1.0):
+        if not isinstance(power_factor, (int, float)):  # Aceita int ou float
+            raise TypeError("Power factor must be a number (int or float).")
+        if power_factor < 0 or power_factor > 1:
+            raise ValueError("The power factor value must be between 0 and 1.")
+        angle = round(math.degrees(math.acos(power_factor)), 2)
+        return angle
 
     def __str__(self):
         return f"Cable: Type={self.tipo}, Resistance={self.resistance}, Reactance={self.reactance}"

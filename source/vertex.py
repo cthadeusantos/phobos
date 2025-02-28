@@ -72,17 +72,6 @@ class Vertex:
     def get_edges(self):
         return list(self.neighbors.values())
 
-    # def update_vertex(self, **kwargs):
-    #     tag = kwargs.get('tag') if kwargs and 'tag' in kwargs else None
-    #     weight = kwargs.get('weight') if kwargs and 'weight' in kwargs else None
-    #     if not isinstance(tag, (str, int)) or not isinstance(weight, (int, float)):
-    #         raise TypeError("Invalid input!")
-    #     if self.tag != tag:
-    #         raise ValueError("Vertex invalid!")
-    #     if tag is not None:
-    #         self.tag = tag
-    #     if weight is not None:
-    #         self.weight = weight
     def update_vertex(self, tag=None, weight=None):
         """Update vertex parameters (tag or weight).
 
@@ -113,6 +102,14 @@ class Vertex:
         if not isinstance(self.tag, (str, int)):
             return False
         return True
+    
+    def get_target(self):
+        pass
+
+    def get_data(self):
+        source = self.tag
+        data ={'weight': self.weight}
+        return data
 
     def __str__(self):
         return f"Vertex: {self.tag} (Weight: {self.weight})"

@@ -73,6 +73,16 @@ class TestGraph(unittest.TestCase):
         with self.assertRaises(AttributeError):
             self.graph.add_edge(distance=5, weight=15, cable=self.cable1)
 
+    def test_check_vertex_is_valid(self):
+        with self.assertRaises(ValueError):
+            self.graph.check_vertex_is_valid(None)
+        with self.assertRaises(TypeError):
+            self.graph.check_vertex_is_valid(Vertex())
+        with self.assertRaises(ValueError):
+            self.graph.check_vertex_is_valid("X")
+        with self.assertRaises(ValueError):
+            self.graph.check_vertex_is_valid(5)
+
     # def test_add_edge_invalid_vertex(self):
     #     with self.assertRaises(AttributeError):  # Or KeyError, depending on your implementation
     #         self.graph.add_edge("A", "D", 5, 15, self.cable1)
@@ -189,6 +199,15 @@ class TestGraph(unittest.TestCase):
 
         with self.assertRaises(ValueError):
             self.graph.update_vertex()
+
+    def test_get_data(self):
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
+        self.graph.add_edge("B", "C", 7, 17, self.cable2)
+        self.graph.add_edge("D", "C", 8, 18, self.cable2)
+        self.graph.add_edge("G", "C", 9, 19, self.cable2)
+
+        self.graph.get_data()
 
 if __name__ == '__main__':
     unittest.main()

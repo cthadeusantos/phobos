@@ -52,5 +52,28 @@ class TestCable(unittest.TestCase):
         self.assertIsInstance(cabo.reactance, float)
         self.assertEqual(cabo.reactance, 2.0)
 
+    def test_impedance(self):
+        cable = Cable(tipo="Alumínio", resistance=25, reactance=2)
+        
+        self.assertEqual(cable.impedance(), 25)
+        self.assertEqual(cable.impedance(power_factor=0.7071067811865476), 19.091883092036785)
+
+        with self.assertRaises(TypeError):
+            cable.impedance(power_factor="A")
+        with self.assertRaises(ValueError):
+            cable.impedance(power_factor=1.009)
+    
+    def test_pf_angle_degree(self):
+        cable = Cable(tipo="Alumínio", resistance=25, reactance=2)
+
+        self.assertEqual(cable.pf_angle_degree(power_factor=0.7071067811865476), 45.0)
+        self.assertEqual(cable.pf_angle_degree(), 0) 
+
+        with self.assertRaises(TypeError):
+            cable.pf_angle_degree(power_factor="A")
+        with self.assertRaises(ValueError):
+            cable.pf_angle_degree(power_factor=1.009)
+
+
 if __name__ == '__main__':
     unittest.main()
