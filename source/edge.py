@@ -5,10 +5,8 @@ class Edge:
         Returns:
             None
         """
-        cable = kwargs.get('cable') if kwargs and 'cable' in kwargs else None
         self.weight = weight
         self.distance = distance
-        self.cable = cable
 
     @property
     def weight(self):
@@ -35,4 +33,4 @@ class Edge:
         self._distance = float(value)
 
     def __str__(self):
-        return f"Edge: weight={self.weight}, distance={self.distance}, cable={self.cable}"
+        return f"Edge: weight={self.weight}, distance={self.distance}"

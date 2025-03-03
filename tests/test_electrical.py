@@ -7,11 +7,11 @@ class TestElectrical(unittest.TestCase):
         self.electrical = ElectricalHandler()
 
     def test_add_parameters(self):
-        self.electrical.vpp = 10
-        self.electrical.vpn = 20
-        self.assertEqual(self.electrical.vpp, 10)
-        self.assertEqual(self.electrical.vpn, 20)
+        self.electrical.vline = 10
+        self.electrical.vphase = 20
+        self.assertEqual(self.electrical.vline, 10)
+        self.assertEqual(self.electrical.vphase, 20)
 
     def test_invalid_parameters(self):
         with self.assertRaises(TypeError):
-            self.electrical.vpp = "10"
+            self.electrical.vline = "10"

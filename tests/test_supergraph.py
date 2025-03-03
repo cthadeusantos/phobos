@@ -1,31 +1,20 @@
 import unittest
-from source.graph import Graph  
 from source.vertex import Vertex  
+from source.supergraph import Supergraph
+from source.cable import Cable 
 
-class TestGraph(unittest.TestCase):
+class TestSuperGraph(unittest.TestCase):
 
     def setUp(self):
-        self.graph = Graph()
+        self.graph = Supergraph()
         self.v1 = Vertex("A", 10)
         self.v2 = Vertex("B", 20)
         self.v3 = Vertex("C", 30.2)
+        self.cable1 = Cable(100)
+        self.cable2 = Cable(50)
         self.graph.add_vertex(self.v1)
         self.graph.add_vertex(self.v2)
         self.graph.add_vertex(self.v3)
-
-    def test_is_connected(self):
-        self.graph.add_edge("A", "B", 50, 15.7)
-        self.graph.add_edge("A", "C", 15.8, 25.8)        
-        self.assertTrue(self.graph.is_connected())
-        self.graph.remove_edge('A','C')
-        self.assertFalse(self.graph.is_connected())
-
-    def test_has_cycle(self):
-        self.graph.add_edge("A", "B", 50, 15.7)
-        self.graph.add_edge("A", "C", 15.8, 25.8)        
-        self.assertFalse(self.graph.has_cycle())
-        self.graph.add_edge("B", "C", 15.8, 25.8)
-        self.assertTrue(self.graph.has_cycle())
 
     def test_get_weight(self):
         self.assertEqual(self.v1.get_weight(), 10)
@@ -33,27 +22,27 @@ class TestGraph(unittest.TestCase):
         self.assertEqual(self.v3.get_weight(), 30.2)
 
     def test_get_edge_weight(self):
-        self.graph.add_edge("D", "B", 50, 15.7)
-        self.graph.add_edge("E", "C", 15.8, 25.8)
+        self.graph.add_edge("D", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("E", "C", 15.8, 25.8, self.cable1)
         self.assertEqual(self.graph.get_edge_weight('B', 'D'), 50)
         self.assertEqual(self.graph.get_edge_weight('C', 'E'), 15.8)
 
     def test_get_neighbors(self):
-        self.graph.add_edge("D", "B", 50, 15.7)
-        self.graph.add_edge("E", "B", 50, 15.7)
-        self.graph.add_edge("E", "C", 15.8, 25.8)
+        self.graph.add_edge("D", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("E", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("E", "C", 15.8, 25.8, self.cable1)
         self.assertEqual(self.graph.get_neighbors('B'), ['D', 'E'])
         self.assertEqual(self.graph.get_neighbors('A'), [])
 
     def test_get_distance(self):
-        self.graph.add_edge("A", "B", 50, 15.7)
-        self.graph.add_edge("A", "C", 15.8, 25.8)
+        self.graph.add_edge("A", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("A", "C", 15.8, 25.8, self.cable1)
         self.assertEqual(self.graph.get_distance('A', 'B'), 15.7)
         self.assertEqual(self.graph.get_distance('A', 'C'), 25.8)
 
     def test_coordinates(self):
-        self.graph.add_edge("A", "B", 50, 15.7)
-        self.graph.add_edge("A", "C", 15.8, 25.8)
+        self.graph.add_edge("A", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("A", "C", 15.8, 25.8, self.cable1)
         self.assertEqual(self.graph.get_distance('A', 'B'), 15.7)
         self.assertEqual(self.graph.get_distance('A', 'C'), 25.8)
 
@@ -70,23 +59,25 @@ class TestGraph(unittest.TestCase):
             self.graph.add_vertex("X", -40)
 
     def test_add_edge(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 15, 25)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 15, 25, self.cable1)
         self.assertIn(self.v2, self.v1.get_neighbors_objects())
         self.assertIn(self.v1, self.v2.neighbors)
         self.assertEqual(self.v1.neighbors[self.v2].weight, 5)
         self.assertEqual(self.v1.neighbors[self.v2].distance, 15)
+        self.assertEqual(self.v1.neighbors[self.v2].cable, self.cable1)
 
     def test_update_edge(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.update_edge("A", "B", 15, 25)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.update_edge("A", "B", 15, 25, self.cable1)
         self.assertEqual(self.v1.neighbors[self.v2].weight, 15)
         self.assertEqual(self.graph.get_edge_weight('A', 'B'), 15)
         self.assertEqual(self.v1.neighbors[self.v2].distance, 25)
+        self.assertEqual(self.v1.neighbors[self.v2].cable, self.cable1)
 
     def test_add_invalid_edge(self):
         with self.assertRaises(AttributeError):
-            self.graph.add_edge(distance=5, weight=15)
+            self.graph.add_edge(distance=5, weight=15, cable=self.cable1)
 
     def test_check_vertex_is_valid(self):
         with self.assertRaises(ValueError):
@@ -98,17 +89,31 @@ class TestGraph(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.graph.check_vertex_is_valid(5)
 
+    # def test_add_edge_invalid_vertex(self):
+    #     with self.assertRaises(AttributeError):  # Or KeyError, depending on your implementation
+    #         self.graph.add_edge("A", "D", 5, 15, self.cable1)
+
+#     def test_graph_string_representation(self):
+#         self.graph.add_edge("A", "B", 5, 15, self.cable1)
+#         expected_string = """Vertex: A (Weight: 10)
+# -> Vertex: B (Weight: 20): Edge: weight=5, distance=15, cable=Cable: Type=Fiber, resistanceCA=100
+# Vertex: B (Weight: 20)
+# -> Vertex: A (Weight: 10): Edge: weight=5, distance=15, cable=Cable: Type=Fiber, resistanceCA=100
+# Vertex: C (Weight: 30)"""  # Improved expected string
+#         self.assertEqual(str(self.graph), expected_string)
+
     def test_add_edge_existing_edge(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "B", 8, 20) # Add another edge between A and B
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "B", 8, 20, self.cable2) # Add another edge between A and B
         self.assertEqual(self.v1.neighbors[self.v2].weight, 8) # Check if the edge was updated
         self.assertEqual(self.v1.neighbors[self.v2].distance, 20) # Check if the edge was updated
+        self.assertEqual(self.v1.neighbors[self.v2].cable, self.cable2) # Check if the edge was updated
 
     def test_has_edge_method(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 15, 25)
-        self.graph.add_edge("A", "D", 15, 25)
-        self.graph.add_edge("D", "E", 35, 45)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 15, 25, self.cable2)
+        self.graph.add_edge("A", "D", 15, 25, self.cable1)
+        self.graph.add_edge("D", "E", 35, 45, self.cable2)
         self.assertTrue(self.graph.has_edge('A', 'B'))
         self.assertTrue(self.graph.has_edge('A', 'C'))
         self.assertTrue(self.graph.has_edge('A', 'D'))
@@ -123,18 +128,18 @@ class TestGraph(unittest.TestCase):
     #         self.graph.tag_adjacency_vertex_list()
 
     def test_get_definitions(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 15, 25)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 15, 25, self.cable2)
         self.assertEqual(self.graph.get_num_vertices(), 3)
         self.assertEqual(self.graph.get_num_edges(), 2)
 
     def test_remove_vertex_and_edge(self):
         # Setting
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 6, 16)
-        self.graph.add_edge("B", "C", 7, 17)
-        self.graph.add_edge("D", "C", 8, 18)
-        self.graph.add_edge("G", "C", 9, 19)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
+        self.graph.add_edge("B", "C", 7, 17, self.cable2)
+        self.graph.add_edge("D", "C", 8, 18, self.cable2)
+        self.graph.add_edge("G", "C", 9, 19, self.cable2)
 
         # Testing
         self.graph.remove_vertex('A')
@@ -161,20 +166,20 @@ class TestGraph(unittest.TestCase):
         self.graph.add_vertex(self.v5)
         self.graph.add_vertex(self.v6)
         self.graph.add_vertex(self.v7)
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 6, 16)
-        self.graph.add_edge("C", "D", 7, 17)
-        self.graph.add_edge("D", "E", 8, 18)
-        self.graph.add_edge("B", "F", 9, 19)
-        self.graph.add_edge("F", "G", 9, 19)
-        self.graph.add_edge("B", "H", 9, 19)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
+        self.graph.add_edge("C", "D", 7, 17, self.cable2)
+        self.graph.add_edge("D", "E", 8, 18, self.cable2)
+        self.graph.add_edge("B", "F", 9, 19, self.cable2)
+        self.graph.add_edge("F", "G", 9, 19, self.cable2)
+        self.graph.add_edge("B", "H", 9, 19, self.cable2)
 
         self.assertEqual(self.graph.BFS('A'), (['A', 'B', 'C', 'F', 'H', 'D', 'G', 'E'], False))
         self.assertEqual(self.graph.DFS('A'), ['A', 'B', 'F', 'G', 'H', 'C', 'D', 'E'])
 
     def test_rename_vertex(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 6, 16)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
         self.graph.rename_vertex('A', 'Z')
         self.assertEqual(self.graph.tag_adjacency_vertex_list(), ['B', 'C', 'Z'])
 
@@ -187,8 +192,8 @@ class TestGraph(unittest.TestCase):
             self.graph.rename_vertex('A', Vertex)
 
     def test_update_vertex(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 6, 16)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
         self.graph.update_vertex('A', 100)
         self.assertEqual(self.graph.get_vertex_weight('A'), 100)
 
@@ -202,11 +207,11 @@ class TestGraph(unittest.TestCase):
             self.graph.update_vertex()
 
     def test_get_data(self):
-        self.graph.add_edge("A", "B", 5, 15)
-        self.graph.add_edge("A", "C", 6, 16)
-        self.graph.add_edge("B", "C", 7, 17)
-        self.graph.add_edge("D", "C", 8, 18)
-        self.graph.add_edge("G", "C", 9, 19)
+        self.graph.add_edge("A", "B", 5, 15, self.cable1)
+        self.graph.add_edge("A", "C", 6, 16, self.cable2)
+        self.graph.add_edge("B", "C", 7, 17, self.cable2)
+        self.graph.add_edge("D", "C", 8, 18, self.cable2)
+        self.graph.add_edge("G", "C", 9, 19, self.cable2)
 
         self.graph.get_data()
 

@@ -21,6 +21,18 @@ class Graph:
         self.vertices = {}  # Dicionário para armazenar vértices
         self.reverse_vertices = {}
 
+    def get_instance_vertex(self, vertex=None):
+        """
+        Get the vertex instance
+        """
+        if vertex is None:
+            raise AttributeError("You must provides the vertex tag!")
+        if not isinstance(vertex, (str, int)):
+            raise TypeError("Vertex tag must be a string or integer!")
+        if vertex not in self.vertices:
+            raise ValueError("Vertex provide not exists!")
+        return self.vertices[vertex] # return the vertex instance
+
     def get_vertex_weight(self, vertex):
         """Get the weight of a vertex.
 
@@ -32,7 +44,7 @@ class Graph:
         """
         if not isinstance(vertex, (str, int)):
             raise TypeError("Invalid input!")
-        return self.vertices[vertex].weight
+        return self.vertices[vertex].weight             
 
     def get_distance(self, source=None, target=None):
         if source is None or target is None:
@@ -53,16 +65,6 @@ class Graph:
             raise TypeError("Invalid input!")
         instance = self.vertices[target]
         return self.vertices[source].neighbors[instance].weight
-
-    def get_cable(self, source=None, target=None):
-        if source is None or target is None:
-            raise ValueError("Vertex cannot be None")
-        if source not in self.vertices or target not in self.vertices:
-            raise ValueError("Vertex not found")
-        if not isinstance(source, (str, int)) and not isinstance(target, (str, int)):
-            raise TypeError("Invalid input!")
-        instance = self.vertices[target]
-        return self.vertices[source].neighbors[instance].cable
 
     def add_vertex(self, vertex=None, weight=0):
         """Add a vertex to the graph.
@@ -85,7 +87,7 @@ class Graph:
         self.vertices[vertex.tag] = vertex
         self.reverse_vertices[vertex] = [vertex.tag]
 
-    def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None):
+    def add_edge(self, source=None, target=None, weight=0, distance=0, overlap=True):
         """Add an edge to the graph.
 
         Returns:
@@ -93,10 +95,16 @@ class Graph:
         """
         if source is None or target is None:
             raise AttributeError("Invalid input!")
-        edge = Edge(weight, distance, cable=cable)
+        edge = Edge(weight, distance)
+        self.add_edge_aux(source, target, overlap, edge)
+
+    def add_edge_aux(self, source, target, overlap, edge):
         if source in self.vertices and target in self.vertices:
-            self.vertices[source].add_edge(self.vertices[target], edge)
-            self.vertices[target].add_edge(self.vertices[source], edge)
+            if overlap:
+                self.vertices[source].add_edge(self.vertices[target], edge)
+                self.vertices[target].add_edge(self.vertices[source], edge)
+            else:
+                raise ValueError("Edge already exists!")
         else:
             if source not in self.vertices and target not in self.vertices: # If source not exists , add it
                 self.add_vertex(Vertex(source))
@@ -112,7 +120,7 @@ class Graph:
                 self.vertices[source].add_edge(self.vertices[target], edge)
                 self.vertices[target].add_edge(self.vertices[source], edge)
 
-    def update_edge(self, source=None, target=None, weight=_SENTINEL, distance=_SENTINEL, cable=_SENTINEL):
+    def update_edge(self, source=None, target=None, weight=_SENTINEL, distance=_SENTINEL):
         """Add an edge to the graph.
 
         Returns:
@@ -135,13 +143,7 @@ class Graph:
         #else:
         #    print(f"Distância: {distance}")
 
-        if cable is self._SENTINEL:
-            # Lógica para lidar com o caso em que cable não foi fornecido
-            cable = self.get_cable(source, target)
-        #else:
-        #    print(f"Cabo: {cable}")
-
-        edge = Edge(weight=weight, distance=distance, cable=cable)
+        edge = Edge(weight=weight, distance=distance)
         self.vertices[source].add_edge(self.vertices[target], edge)
         self.vertices[target].add_edge(self.vertices[source], edge)
 
@@ -184,6 +186,9 @@ class Graph:
         """
         return source in self.tag_adjacency_vertex_list(target) and target in self.tag_adjacency_vertex_list(source)
 
+    def get_neighbors(self, vertex):
+        return self.tag_adjacency_vertex_list(vertex)
+
     def get_num_vertices(self):
         """Calculates the total number of vertices in the graph.
 
@@ -204,7 +209,7 @@ class Graph:
         """Remove a vertex and your edges from graph.
 
         Returns:
-            None
+            Nones
         """
         if source is None:
             raise AttributeError("Invalid vertex!")
@@ -216,6 +221,7 @@ class Graph:
             del self.vertices[tag].neighbors[instance_source]   # Remove the entry with the old tag (more efficient than pop)
         #self.vertices.pop(source, None)
         del self.vertices[source]   # Remove the entry with the old tag (more efficient than pop)
+        del self.reverse_vertices[instance_source]
 
     def remove_edge(self, source, target):
         """Removes an edge between two vertices.
@@ -239,15 +245,51 @@ class Graph:
         del self.vertices[source].neighbors[self.vertices[target]]  # Remove the entry with the old tag (more efficient than pop)
         del self.vertices[target].neighbors[self.vertices[source]]  # Remove the entry with the old tag (more efficient than pop)
 
+
+    # def BFS(self, start, array=None):
+    #     """Performs a Breadth-First Search (BFS) on the graph.
+
+    #     Args:
+    #         start: The starting vertex (can be an integer or a string).
+    #         array: An optional list to store the visited vertices. If None, a new list is created.
+
+    #     Returns:
+    #         list: A list of visited vertices in the order they were visited.
+        
+    #     Raises:
+    #         ValueError: If the starting vertex is not found in the graph.
+    #     """
+
+    #     if array is None:
+    #         array = []
+
+    #     if start not in self.vertices:  # Check if the starting vertex exists
+    #         raise ValueError(f"Starting vertex '{start}' not found in the graph.")
+
+    #     visited = {vertex: False for vertex in self.vertices} # Use a dictionary for flexibility
+    #     queue = deque([start])  # Use deque for efficiency and initialize with the start vertex
+    #     visited[start] = True
+
+    #     while queue:
+    #         vertex = queue.popleft()  # Get the next vertex from the queue
+    #         array.append(vertex)  # Append the visited vertex
+    #         for neighbor in self.tag_adjacency_vertex_list(vertex):  # Iterate through the neighbors
+    #             if not visited[neighbor]:
+    #                 queue.append(neighbor)  # Add unvisited neighbors to the queue
+    #                 visited[neighbor] = True  # Mark the neighbor as visited
+
+    #     return array
+
+
     def BFS(self, start, array=None):
-        """Performs a Breadth-First Search (BFS) on the graph.
+        """Performs a Breadth-First Search (BFS) on the graph and detects cycles.
 
         Args:
-            start: The starting vertex (can be an integer or a string).
+            start: The starting vertex (key in the self.vertices dictionary).
             array: An optional list to store the visited vertices. If None, a new list is created.
 
         Returns:
-            list: A list of visited vertices in the order they were visited.
+            tuple: (list of visited vertices, boolean indicating if a cycle was detected)
         
         Raises:
             ValueError: If the starting vertex is not found in the graph.
@@ -256,22 +298,28 @@ class Graph:
         if array is None:
             array = []
 
-        if start not in self.vertices:  # Check if the starting vertex exists
+        if start not in self.vertices:  
             raise ValueError(f"Starting vertex '{start}' not found in the graph.")
 
-        visited = {vertex: False for vertex in self.vertices} # Use a dictionary for flexibility
-        queue = deque([start])  # Use deque for efficiency and initialize with the start vertex
+        visited = {vertex: False for vertex in self.vertices}  
+        parent = {vertex: None for vertex in self.vertices}  # Para rastrear de onde viemos
+        queue = deque([start])  
         visited[start] = True
+        cycle_detected = False  # Flag para indicar se há um ciclo
 
         while queue:
-            vertex = queue.popleft()  # Get the next vertex from the queue
-            array.append(vertex)  # Append the visited vertex
-            for neighbor in self.tag_adjacency_vertex_list(vertex):  # Iterate through the neighbors
-                if not visited[neighbor]:
-                    queue.append(neighbor)  # Add unvisited neighbors to the queue
-                    visited[neighbor] = True  # Mark the neighbor as visited
+            vertex = queue.popleft()  
+            array.append(vertex)  
 
-        return array
+            for neighbor in self.get_neighbors(vertex):  # Obter vizinhos da lista
+                if not visited[neighbor]:
+                    queue.append(neighbor)  
+                    visited[neighbor] = True  
+                    parent[neighbor] = vertex  # Registrar a origem
+                elif parent[vertex] != neighbor:  # Se visitado e não for o pai, temos um ciclo
+                    cycle_detected = True
+
+        return array, cycle_detected
 
     def DFS(self, start, visited=None, array=None):
         """Performs a Depth-First Search (DFS) on the graph.
@@ -304,7 +352,25 @@ class Graph:
                 self.DFS(neighbor, visited, array)  # Pass the array to recursive calls
 
         return array
-    
+
+    def is_connected(self):
+        if self.vertices == {}:
+            raise ValueError("There are no vertices!")
+        vertices = list(self.vertices)
+        start = vertices[0]
+        array, boolean = self.BFS(start)
+
+        return vertices == array
+
+    def has_cycle(self):
+        if self.vertices == {}:
+            raise ValueError("There are no vertices!")
+        vertices = list(self.vertices)
+        start = vertices[0]
+        array, boolean = self.BFS(start)
+
+        return boolean
+
     def rename_vertex(self, old=None, new=None):
         """Renames a vertex in the graph.
 
@@ -383,7 +449,6 @@ class Graph:
                     tag = self.reverse_vertices[key1][0]
                     data[key]['neighbors'].append({'vertex': tag, 'weight': self.vertices[key].neighbors[key1].weight,
                     'distance': self.vertices[key].neighbors[key1].distance })
-        print(data)
         return data
 
     def __str__(self):

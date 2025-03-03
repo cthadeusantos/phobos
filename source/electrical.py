@@ -1,35 +1,35 @@
 class ElectricalHandler:
-    def __init__(self, vpp=0, vpn=0):
-        self._vpp = vpp
-        self._vpn = vpn
+    def __init__(self, vline=0, vphase=0):
+        self._vline = vline
+        self._vphase = vphase
 
     @property
-    def vpp(self):
-        return self._vpp
+    def vline(self):
+        return self._vline
 
-    @vpp.setter
-    def vpp(self, value=0.0):
+    @vline.setter
+    def vline(self, value=0.0):
         if value is not None:
             if not isinstance(value, (int, float)):
-                raise TypeError("Invalid value for Vpp")
+                raise TypeError("Invalid value for vline")
 
             if isinstance(value, (int, float)) and value < 0:
-                raise ValueError("Vpp must be a non-negative integer.")
-        self._vpp = value
+                raise ValueError("vline must be a non-negative integer.")
+        self._vline = value
 
     @property
-    def vpn(self):
-        return self._vpn
+    def vphase(self):
+        return self._vphase
 
-    @vpn.setter
-    def vpn(self, value=0.0):
+    @vphase.setter
+    def vphase(self, value=0.0):
         if value is not None:
             if not isinstance(value, (int, float)):
-                raise TypeError("Invalid value for Vpn")
+                raise TypeError("Invalid value for vphase")
 
             if isinstance(value, (int, float)) and value < 0:
-                raise ValueError("Vpp must be a non-negative integer.")
-        self._vpn = value
+                raise ValueError("vline must be a non-negative integer.")
+        self._vphase = value
 
     # def unbalance(self, Ia=None, Ib=None, Ic=None):
     #     if Ic is not None:  # Ver documento cemig nd3_1_000001p.pdf

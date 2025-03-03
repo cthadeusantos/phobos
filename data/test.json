@@ -1,6 +1,167 @@
 {
-    "vpp": "100",
-    "vpn": "50",
-    "power_factor": "0.7",
-    "root": "A"
+    "graph": {
+        "A": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "B": {
+                    "cable_id": 180,
+                    "edge_distance": 101.0,
+                    "edge_weight": 22.0,
+                    "installation": null
+                },
+                "C": {
+                    "cable_id": 180,
+                    "edge_distance": 100.0,
+                    "edge_weight": 21.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 10.0
+        },
+        "B": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "A": {
+                    "cable_id": 180,
+                    "edge_distance": 101.0,
+                    "edge_weight": 22.0,
+                    "installation": null
+                },
+                "D": {
+                    "cable_id": 150,
+                    "edge_distance": 102.0,
+                    "edge_weight": 23.0,
+                    "installation": null
+                },
+                "E": {
+                    "cable_id": 150,
+                    "edge_distance": 103.0,
+                    "edge_weight": 24.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 11.0
+        },
+        "C": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "A": {
+                    "cable_id": 180,
+                    "edge_distance": 100.0,
+                    "edge_weight": 21.0,
+                    "installation": null
+                },
+                "F": {
+                    "cable_id": 88,
+                    "edge_distance": 105.0,
+                    "edge_weight": 26.0,
+                    "installation": null
+                },
+                "H": {
+                    "cable_id": 88,
+                    "edge_distance": 106.0,
+                    "edge_weight": 26.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 12.0
+        },
+        "D": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "B": {
+                    "cable_id": 150,
+                    "edge_distance": 102.0,
+                    "edge_weight": 23.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 14.0
+        },
+        "E": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "B": {
+                    "cable_id": 150,
+                    "edge_distance": 103.0,
+                    "edge_weight": 24.0,
+                    "installation": null
+                },
+                "I": {
+                    "cable_id": 180,
+                    "edge_distance": 104.0,
+                    "edge_weight": 25.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 15.0
+        },
+        "F": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "C": {
+                    "cable_id": 88,
+                    "edge_distance": 105.0,
+                    "edge_weight": 26.0,
+                    "installation": null
+                },
+                "G": {
+                    "cable_id": 88,
+                    "edge_distance": 107.0,
+                    "edge_weight": 28.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 16.0
+        },
+        "G": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "F": {
+                    "cable_id": 88,
+                    "edge_distance": 107.0,
+                    "edge_weight": 28.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 17.0
+        },
+        "H": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "C": {
+                    "cable_id": 88,
+                    "edge_distance": 106.0,
+                    "edge_weight": 26.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 18.0
+        },
+        "I": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "E": {
+                    "cable_id": 180,
+                    "edge_distance": 104.0,
+                    "edge_weight": 25.0,
+                    "installation": null
+                }
+            },
+            "vertex_weight": 19.0
+        }
+    },
+    "power_factor": 0.5,
+    "root": "1",
+    "vline": 220,
+    "vphase": 127
 }

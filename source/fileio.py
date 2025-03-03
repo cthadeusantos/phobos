@@ -1,6 +1,5 @@
 import os
 import json
-import re
 
 class FileIO:
 
@@ -32,8 +31,11 @@ class FileIO:
             print('Arquivo não encontrado.')
         except json.JSONDecodeError:
             print('Conteúdo do arquivo não é um JSON válido.')
+        return data
         
-    def save(self, data, output=None):
+    def save(self, data=None, output=None):
+        if data is None:
+            raise AttributeError('Empty data!')
         if output is None:
             raise AttributeError('Empty filename!')
         try:
@@ -48,3 +50,4 @@ class FileIO:
 
     def check_if_path_exists(self, path):
         return os.path.exists(path)
+    

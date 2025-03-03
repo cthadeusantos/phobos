@@ -4,22 +4,178 @@ from source.fileio import FileIO
 class TestSystem(unittest.TestCase):
 
     def setUp(self):
-        self.instance = FileIO('data/test.json')
+        self.instance = FileIO('data/entrada.json')
+        self.data = {
+    "graph": {
+        "A": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "B": {
+                    "cable_id": 180,
+                    "edge_distance": 101.0,
+                    "edge_weight": 22.0,
+                    "installation": 0
+                },
+                "C": {
+                    "cable_id": 180,
+                    "edge_distance": 100.0,
+                    "edge_weight": 21.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 10.0
+        },
+        "B": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "A": {
+                    "cable_id": 180,
+                    "edge_distance": 101.0,
+                    "edge_weight": 22.0,
+                    "installation": 0
+                },
+                "D": {
+                    "cable_id": 150,
+                    "edge_distance": 102.0,
+                    "edge_weight": 23.0,
+                    "installation": 0
+                },
+                "E": {
+                    "cable_id": 150,
+                    "edge_distance": 103.0,
+                    "edge_weight": 24.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 11.0
+        },
+        "C": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "A": {
+                    "cable_id": 180,
+                    "edge_distance": 100.0,
+                    "edge_weight": 21.0,
+                    "installation": 0
+                },
+                "F": {
+                    "cable_id": 88,
+                    "edge_distance": 105.0,
+                    "edge_weight": 26.0,
+                    "installation": 0
+                },
+                "H": {
+                    "cable_id": 88,
+                    "edge_distance": 106.0,
+                    "edge_weight": 26.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 12.0
+        },
+        "D": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "B": {
+                    "cable_id": 150,
+                    "edge_distance": 102.0,
+                    "edge_weight": 23.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 14.0
+        },
+        "E": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "B": {
+                    "cable_id": 150,
+                    "edge_distance": 103.0,
+                    "edge_weight": 24.0,
+                    "installation": 0
+                },
+                "I": {
+                    "cable_id": 180,
+                    "edge_distance": 104.0,
+                    "edge_weight": 25.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 15.0
+        },
+        "F": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "C": {
+                    "cable_id": 88,
+                    "edge_distance": 105.0,
+                    "edge_weight": 26.0,
+                    "installation": 0
+                },
+                "G": {
+                    "cable_id": 88,
+                    "edge_distance": 107.0,
+                    "edge_weight": 28.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 16.0
+        },
+        "G": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "F": {
+                    "cable_id": 88,
+                    "edge_distance": 107.0,
+                    "edge_weight": 28.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 17.0
+        },
+        "H": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "C": {
+                    "cable_id": 88,
+                    "edge_distance": 106.0,
+                    "edge_weight": 26.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 18.0
+        },
+        "I": {
+            "coordinate_x": 0,
+            "coordinate_y": 0,
+            "edges": {
+                "E": {
+                    "cable_id": 180,
+                    "edge_distance": 104.0,
+                    "edge_weight": 25.0,
+                    "installation": 0
+                }
+            },
+            "vertex_weight": 19.0
+        }
+    },
+    "power_factor": 0.5,
+    "root": "1",
+    "vphase": 127,
+    "vline": 220
+}
 
     def test_read(self):
-        self.assertEqual(self.instance.read(), {
-            "vpp": '100',
-            "vpn": '50',
-            "power_factor": '0.7',
-            "root": "A"
-            })
+        self.assertEqual(self.instance.read(), self.data)
 
     def test_save(self):
-        data = {
-            "vpp": 100,
-            "vpn": 50,
-            "power_factor": 0.7,
-            "root": "A"
-            }
-        self.instance.save(data, 'data/saida.json')
+        self.instance.save(self.data, 'data/saida.json')
         self.assertTrue(self.instance.check_if_path_exists('data/saida.json'))
