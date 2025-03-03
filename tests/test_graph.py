@@ -11,8 +11,8 @@ class TestGraph(unittest.TestCase):
         self.v1 = Vertex("A", 10)
         self.v2 = Vertex("B", 20)
         self.v3 = Vertex("C", 30.2)
-        self.cable1 = Cable("Fiber", 100)
-        self.cable2 = Cable("Copper", 50)
+        self.cable1 = Cable(100)
+        self.cable2 = Cable(50)
         self.graph.add_vertex(self.v1)
         self.graph.add_vertex(self.v2)
         self.graph.add_vertex(self.v3)
@@ -27,6 +27,13 @@ class TestGraph(unittest.TestCase):
         self.graph.add_edge("E", "C", 15.8, 25.8, self.cable1)
         self.assertEqual(self.graph.get_edge_weight('B', 'D'), 50)
         self.assertEqual(self.graph.get_edge_weight('C', 'E'), 15.8)
+
+    def test_get_neighbors(self):
+        self.graph.add_edge("D", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("E", "B", 50, 15.7, self.cable1)
+        self.graph.add_edge("E", "C", 15.8, 25.8, self.cable1)
+        self.assertEqual(self.graph.get_neighbors('B'), ['D', 'E'])
+        self.assertEqual(self.graph.get_neighbors('A'), [])
 
     def test_get_distance(self):
         self.graph.add_edge("A", "B", 50, 15.7, self.cable1)
@@ -90,9 +97,9 @@ class TestGraph(unittest.TestCase):
 #     def test_graph_string_representation(self):
 #         self.graph.add_edge("A", "B", 5, 15, self.cable1)
 #         expected_string = """Vertex: A (Weight: 10)
-# -> Vertex: B (Weight: 20): Edge: weight=5, distance=15, cable=Cable: Type=Fiber, resistance=100
+# -> Vertex: B (Weight: 20): Edge: weight=5, distance=15, cable=Cable: Type=Fiber, resistanceCA=100
 # Vertex: B (Weight: 20)
-# -> Vertex: A (Weight: 10): Edge: weight=5, distance=15, cable=Cable: Type=Fiber, resistance=100
+# -> Vertex: A (Weight: 10): Edge: weight=5, distance=15, cable=Cable: Type=Fiber, resistanceCA=100
 # Vertex: C (Weight: 30)"""  # Improved expected string
 #         self.assertEqual(str(self.graph), expected_string)
 
@@ -208,6 +215,16 @@ class TestGraph(unittest.TestCase):
         self.graph.add_edge("G", "C", 9, 19, self.cable2)
 
         self.graph.get_data()
+
+    def test_get_vertex_instance(self):
+        with self.assertRaises(ValueError):
+            self.graph.get_instance_vertex('R')
+        with self.assertRaises(TypeError):
+            self.graph.get_instance_vertex(Vertex())
+        with self.assertRaises(AttributeError):
+            self.graph.get_instance_vertex()
+        self.assertIsInstance(self.graph.get_instance_vertex('A'), Vertex)
+        
 
 if __name__ == '__main__':
     unittest.main()

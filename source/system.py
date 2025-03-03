@@ -2,30 +2,34 @@ from math import sqrt
 
 from source.graph import Graph
 from source.vertex import Vertex
+from source.database import CableDBMT
+from source.cable import Cable
 from source.electrical import ElectricalHandler
 
 class System(Graph):
 
-    class Sentinel(Graph.Sentinel):  # Herda de Graph.Sentinel
-            pass
-
-    def __init__(self, root=None, vpp=None, vpn=None, power_factor=None, data=None):
+    def __init__(self, root=None, vpp=0, vpn=0, power_factor=0, data=None):
         """ Constructor
 
         Returns:
             None
         """
         super().__init__()
-        if data is None:
+        if data is not None:
+            self.root = data.get('root', None)
+            self.vpp = data.get('vpp', 0)
+            self.vpn = data.get('vpn', 0)
+            self.power_factor = data.get('power_factor', 0)
+        else:
             self.root = root
             self.power_factor = power_factor
-            self.eletrical = ElectricalHandler(vpp, vpn)
-            self.extra = {}
-        else:
-            self.root = data.get('root', None)
-            self.vpp = data.get('vpp', None)
-            self.vpn = data.get('vpn', None)
-            self.power_factor = data.get('power_factor', None)
+            self.vpp = vpp
+            self.vpn = vpn
+        self.eletrical = ElectricalHandler(vpp, vpn)
+        self.extra = {}
+
+    class Sentinel(Graph.Sentinel):  # Herda de Graph.Sentinel
+            pass
 
     class VertexExtraAttributes:
         def __init__(self, coordinates=(0,0), payload=0):
@@ -77,7 +81,7 @@ class System(Graph):
             if not isinstance(value, (int, float)):
                 raise TypeError("Invalid power factor value")
 
-            if value <= 0 or value > 1:
+            if value < 0 or value > 1:
                 raise ValueError("Power factor must be between 0 and 1.")
         self._power_factor = value
 
@@ -123,6 +127,9 @@ class System(Graph):
                 raise ValueError("root must be a non-negative integer.")
         self._root = value
 
+    def get_setup(self):
+        return {'vpp': self.vpp, 'vpn': self.vpn, 'power_factor': self.power_factor, 'root': self.root}
+
     def add_vertex(self, vertex=None, weight=0, coordinates=(0, 0), payload=0):
         super().add_vertex(vertex, weight)
 
@@ -132,6 +139,69 @@ class System(Graph):
         if isinstance(vertex, Vertex):
             vertex = vertex.tag
         self.extra[vertex] = self.VertexExtraAttributes(coordinates=coordinates, payload=payload)
+
+    def get_installation(self, source, target):
+        target_instance = self.get_instance_vertex(target)
+        return self.vertices[source].neighbors[target_instance].installation
+    
+    def set_installation(self, source, target, installation):
+        target_instance = self.get_instance_vertex(target)
+        self.vertices[source].neighbors[target_instance].installation=installation
+
+    def serializeData(self):
+        data = {
+            "vpp": self.vpp,
+            "vpn": self.vpn,
+            "power_factor": self.power_factor,
+            "root": self.root,
+            }
+        edges = {}
+        rows = {}
+        for source in self.vertices:
+            if source not in rows:
+                rows[source] = {}
+            x, y = self.get_coordinates(source)
+            rows[source]['vertex_weight'] = self.vertices[source].get_weight()
+            rows[source]['coordinate_x'] = x
+            rows[source]['coordinate_y'] = y
+            edges[source]= {}
+            for neighbor in self.vertices[source].neighbors:
+                target = neighbor.tag
+                weight = self.get_edge_weight(source, target)
+                distance = self.get_distance(source, target)
+                id = self.get_cable_id(source, target)
+                installation = self.get_installation(source, target)
+                edges[source][target] = {'edge_weight': weight, 'edge_distance': distance, 'cable_id': id, 'installation': installation}
+            rows[source]['edges'] = edges[source]
+        data['graph'] = rows
+        return data
+
+    def deserializeData(self, data=None, database=None):
+        if data is None:
+            raise AttributeError('Empty data!')
+        graph = data.get('graph', {})
+        if graph is {}:
+            raise ImportError("Data are not formated!")
+        self.root = data.get('root', None)
+        self.vpp = data.get('vpp', 0)
+        self.vpn = data.get('vpn', 0)
+        self.power_factor = data.get('power_factor', 0)
+        for source, value in graph.items():
+            x = value.get('coordinate_x', 0.0)
+            y = value.get('coordinate_y', 0.0)
+            vweight = value.get('vertex_weight', 0.0)
+            if len(edges := value.get('edges', {}).items()):
+                for target, parameters in edges:
+                    distance = parameters.get('edge_distance', 0.0)
+                    eweight = parameters.get('edge_weight', 0.0)
+                    cable_id = parameters.get('cable_id', 0.0)
+                    cable = Cable()
+                    installation = parameters.get('installation', 0)
+                    cable.setting(database.get_cable_especifications(id=cable_id, installation=installation))
+                    self.add_edge(source, target, eweight, distance, cable, installation, (x, y), overlap=True)
+            else:
+                self.add_vertex(source)
+            self.set_vertex_weight(tag=source, weight=vweight)
 
     def get_root(self):
         return self.root
@@ -162,14 +232,16 @@ class System(Graph):
 
     ## FUNCAO PARA SER REFATORADA NO FUTURO
     ## FUI AJUSTANDO E FIQUEI DE SACO CHEIO PQ PRECISO FECHAR A funcao DFS_expert
-    def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None, coord_source=None, coord_target=None):
-        if source in self.vertices and target in self.vertices:
-            raise ValueError("Edge already exists")
-
+    def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None, installation=0, coord_source=None, coord_target=None, overlap=True):
+        """
+        coord_source: Coordinates x and y for source vertex (optional)
+        coord_target: Coordinates x and y for target vertex (optional)
+        skip: Jump if edge exists (optional)
+        """    
         x1, y1 = coord_source if coord_source is not None else (0, 0)
         x2, y2 = coord_target if coord_target is not None else (0, 0)
 
-        super().add_edge(source, target, weight, distance, cable=cable)
+        super().add_edge(source, target, weight, distance, cable=cable, overlap=overlap)
 
         if source not in self.extra and target not in self.extra:
             self.extra[source] = self.VertexExtraAttributes(coordinates=(x1, y1))
@@ -181,6 +253,9 @@ class System(Graph):
         
         self.extra[source].coordinates = (x1, y1) if source is not None else (0, 0)
         self.extra[target].coordinates = (x2, y2) if target is not None else (0, 0)
+        # target_instance = self.get_instance_vertex(target)
+        # self.vertices[source].neighbors[target_instance].installation=installlation
+        self.set_installation(source, target, installation)
 
     def update_edge(self, source=None, target=None, weight=Graph._SENTINEL, distance=Graph._SENTINEL, cable=Graph._SENTINEL, coord_source=Graph._SENTINEL, coord_target=Graph._SENTINEL):
         if source not in self.vertices or target not in self.vertices:

@@ -49,9 +49,18 @@ Thumbs.db
 *.mov
 *.wmv
 
+# Trash folders
+trash/
+
+# Excel Backup files
+*.xlxs#
+
 # My trash folders
 old_code/
 
 # VSCODE settings folder
 .vscode/
+
+# Python enviroment folder
+.venv/
 

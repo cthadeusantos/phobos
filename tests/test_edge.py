@@ -1,11 +1,12 @@
 import unittest
 from source.cable import Cable
 from source.edge import Edge
+from source.database import CableDBMT
 
 class TestEdge(unittest.TestCase):
 
     def test_edge_creation_with_cable(self):
-        cable = Cable("Fiber Optic", 100)  # Create a Cable object
+        cable = Cable(100)  # Create a Cable object
         edge = Edge(5, 15, cable=cable)
         self.assertEqual(edge.weight, 5)
         self.assertEqual(edge.distance, 15)
@@ -15,17 +16,18 @@ class TestEdge(unittest.TestCase):
         edge = Edge(8, 20)  # No cable provided
         self.assertEqual(edge.weight, 8)
         self.assertEqual(edge.distance, 20)
-        self.assertIsNone(edge.cable)  # Cable should be None
+        self.assertIsNotNone(edge.cable)  # Cable should be None
 
     def test_edge_string_representation_with_cable(self):
-        cable = Cable("Copper", 50)
+        #input = CableDBMT()
+        cable = Cable(50)
         edge = Edge(10, 25, cable=cable)
         expected_string = f"Edge: weight=10.0, distance=25.0, cable={cable}"
         self.assertEqual(str(edge), expected_string)
 
     def test_edge_string_representation_without_cable(self):
         edge = Edge(12, 30)
-        self.assertEqual(str(edge), "Edge: weight=12.0, distance=30.0, cable=None")
+        self.assertEqual(str(edge), "Edge: weight=12.0, distance=30.0, cable=Cable: Type=None, resistanceCA=0.0, Reactance=0.0")
 
     def test_weight_setter(self):
         edge = Edge()

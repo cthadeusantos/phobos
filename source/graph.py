@@ -21,6 +21,18 @@ class Graph:
         self.vertices = {}  # Dicionário para armazenar vértices
         self.reverse_vertices = {}
 
+    def get_instance_vertex(self, vertex=None):
+        """
+        Get the vertex instance
+        """
+        if vertex is None:
+            raise AttributeError("You must provides the vertex tag!")
+        if not isinstance(vertex, (str, int)):
+            raise TypeError("Vertex tag must be a string or integer!")
+        if vertex not in self.vertices:
+            raise ValueError("Vertex provide not exists!")
+        return self.vertices[vertex] # return the vertex instance
+
     def get_vertex_weight(self, vertex):
         """Get the weight of a vertex.
 
@@ -33,6 +45,9 @@ class Graph:
         if not isinstance(vertex, (str, int)):
             raise TypeError("Invalid input!")
         return self.vertices[vertex].weight
+
+    def get_cable_id(self, source=None, target=None):
+        return self.get_cable(source, target).id              
 
     def get_distance(self, source=None, target=None):
         if source is None or target is None:
@@ -53,7 +68,7 @@ class Graph:
             raise TypeError("Invalid input!")
         instance = self.vertices[target]
         return self.vertices[source].neighbors[instance].weight
-
+    
     def get_cable(self, source=None, target=None):
         if source is None or target is None:
             raise ValueError("Vertex cannot be None")
@@ -85,7 +100,7 @@ class Graph:
         self.vertices[vertex.tag] = vertex
         self.reverse_vertices[vertex] = [vertex.tag]
 
-    def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None):
+    def add_edge(self, source=None, target=None, weight=0, distance=0, cable=None, overlap=True):
         """Add an edge to the graph.
 
         Returns:
@@ -95,8 +110,11 @@ class Graph:
             raise AttributeError("Invalid input!")
         edge = Edge(weight, distance, cable=cable)
         if source in self.vertices and target in self.vertices:
-            self.vertices[source].add_edge(self.vertices[target], edge)
-            self.vertices[target].add_edge(self.vertices[source], edge)
+            if overlap:
+                self.vertices[source].add_edge(self.vertices[target], edge)
+                self.vertices[target].add_edge(self.vertices[source], edge)
+            else:
+                raise ValueError("Edge already exists!")
         else:
             if source not in self.vertices and target not in self.vertices: # If source not exists , add it
                 self.add_vertex(Vertex(source))
@@ -184,6 +202,9 @@ class Graph:
         """
         return source in self.tag_adjacency_vertex_list(target) and target in self.tag_adjacency_vertex_list(source)
 
+    def get_neighbors(self, vertex):
+        return self.tag_adjacency_vertex_list(vertex)
+
     def get_num_vertices(self):
         """Calculates the total number of vertices in the graph.
 
@@ -204,7 +225,7 @@ class Graph:
         """Remove a vertex and your edges from graph.
 
         Returns:
-            None
+            Nones
         """
         if source is None:
             raise AttributeError("Invalid vertex!")
@@ -216,6 +237,7 @@ class Graph:
             del self.vertices[tag].neighbors[instance_source]   # Remove the entry with the old tag (more efficient than pop)
         #self.vertices.pop(source, None)
         del self.vertices[source]   # Remove the entry with the old tag (more efficient than pop)
+        del self.reverse_vertices[instance_source]
 
     def remove_edge(self, source, target):
         """Removes an edge between two vertices.
