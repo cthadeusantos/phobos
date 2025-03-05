@@ -405,7 +405,6 @@ class Graph:
                     tag = self.reverse_vertices[key1][0]
                     data[key]['neighbors'].append({'vertex': tag, 'weight': self.vertices[key].neighbors[key1].weight,
                     'distance': self.vertices[key].neighbors[key1].distance })
-        print(data)
         return data
 
     def __str__(self):

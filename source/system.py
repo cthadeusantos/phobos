@@ -1,4 +1,4 @@
-from math import sqrt
+from math import sqrt, acos, sin, pi
 
 from source.graph import Graph
 from source.vertex import Vertex
@@ -19,17 +19,22 @@ class System(Graph):
             self.root = data.get('root', None)
             self.vpp = data.get('vpp', 0)
             self.vpn = data.get('vpn', 0)
+            self.vn = 0
             self.power_factor = data.get('power_factor', 0)
         else:
             self.root = root
             self.power_factor = power_factor
             self.vpp = vpp
             self.vpn = vpn
+            self.vn = 0
         self.eletrical = ElectricalHandler(vpp, vpn)
         self.extra = {}
+        self.kfactor = {}
+        self.drop_voltage_segment = {}
+        self.drop_voltage_accumulated = {}
 
     class Sentinel(Graph.Sentinel):  # Herda de Graph.Sentinel
-            pass
+        pass
 
     class VertexExtraAttributes:
         def __init__(self, coordinates=(0,0), payload=0):
@@ -70,6 +75,9 @@ class System(Graph):
                 if isinstance(value, (int, float)) and value < 0:
                     raise ValueError("Payload must be a non-negative integer.")
             self._payload = value
+
+    def set_vn(self, value):
+        self.vn = value
 
     @property
     def power_factor(self):
@@ -279,18 +287,20 @@ class System(Graph):
         self.extra[source] = self.VertexExtraAttributes(coordinates=coord_source)
         self.extra[target] = self.VertexExtraAttributes(coordinates=coord_target)
 
-    #def DFS_expert(self, start=None, visited=None):
     def DFS_expert(self, start=None, visited=None):
         """Executa DFS e calcula a soma das cargas nos vértices e nas arestas."""
 
         if visited is None:
             visited = set()
 
-        if start is None:
+        if start is None and self.root is None:
             raise ValueError(f"Root vertex '{start}' cannot be None.")
+        
+        if start is None and self.root is not None:
+            start = self.root
 
         if start not in self.vertices:
-            raise ValueError(f"Root vertex '{start}' not found.")
+            raise ValueError(f"Vertex '{start}' not found.")
 
         visited.add(start)
 
@@ -315,16 +325,154 @@ class System(Graph):
                     self.extra[start].payload += self.get_edge_weight(start, neighbor)
         return self.extra
     
-    def accumulate_payload(self, vertex=root):
-        """Executa DFS_expert e retorna um dicionário com as cargas acumuladas."""
-        if vertex is None:
-            raise ValueError("Root vertex cannot be None.")
-        cargas = self.DFS_expert(vertex)
-        payload = {}
-        for key, value in cargas.items():
-            payload[key] = value.payload      
-        return payload
+    def DFS_drop_voltage(self, start=None, visited=None, last=None):
+        """Executa DFS e calcula a soma das cargas nos vértices e nas arestas."""
+
+        if visited is None:
+            visited = set()
+
+        if start is None and self.root is None:
+            raise ValueError(f"Root vertex '{start}' cannot be None.")
+        
+        if start is None and self.root is not None:
+            start = self.root
+
+        if start not in self.vertices:
+            raise ValueError(f"Vertex '{start}' not found.")
+
+        visited.add(start)
+
+        if start == self.root:  # Inicializa a carga do vértice raiz e inicializa a tabela
+            self.drop_voltage_accumulated[start] = self.get_drop_voltage_at_segment(start, '\u039F')  # Método para obter a carga do segmento
+        else:
+            if start not in self.drop_voltage_accumulated:
+                self.drop_voltage_accumulated[start] = self.drop_voltage_accumulated[last]  # Inicializa vértice com queda de tensão do vértice pai
+            self.drop_voltage_accumulated[start] += self.get_drop_voltage_at_segment(start, last) # Acumula queda de tensão
+
+        for neighbor in self.tag_adjacency_vertex_list(start):
+            if neighbor not in visited:
+                self.DFS_drop_voltage(neighbor, visited, last=start)
     
+    def get_drop_voltage_at_segment(self, source, target):
+        if source in self.drop_voltage_segment:
+            if target in self.drop_voltage_segment[source] or target == '\u039F':
+                return self.drop_voltage_segment[source][target]
+        if target in self.drop_voltage_segment:
+            if source in self.drop_voltage_segment[target]:
+                return self.drop_voltage_segment[target][source]
+        raise ValueError(f"There is a invalid vertex. {source} or {target}")
+
+    def accumulate_payload(self):
+        """Executa DFS_expert e retorna um dicionário com as cargas acumuladas."""
+        if self.root is None:
+            raise ValueError("The vertex root cannot be None.")
+        if self.root not in self.vertices:
+            raise ValueError("You must a root vertex to compute the drop voltage")
+        self.DFS_expert()
+
+    def payload_list(self):
+        if not len(self.extra):
+            raise ValueError("Extra vertex attributes cannot be empty!")
+        payload = {}
+        for key, value in self.extra.items():
+            payload[key] = value.payload
+        return payload
+
+    def k_factor_table(self):
+        self.kfactor = {}  # Inicializa kfactor como um dicionário vazio
+
+        for source, value in self.vertices.items():
+            for key1, value in self.vertices[source].neighbors.items():
+                target = key1.get_tag()
+                cable = self.get_cable(source, target)
+                rca = cable.get_rca()
+                xl = cable.get_xl()
+                k = self.calc_kfactor(rca, xl)
+
+                if (source in self.kfactor and target in self.kfactor[source]) or \
+                (target in self.kfactor and source in self.kfactor[target]):
+                    continue
+
+                if source not in self.kfactor:
+                    self.kfactor[source] = {}  # Inicializa o dicionário interno para o vértice
+
+                self.kfactor[source][target] = k  # Adiciona o kfactor para o vértice e o vizinho
+
+    def get_kfactor(self, source, target):
+        if source in self.kfactor:
+            if target in self.kfactor[source]:
+                return self.kfactor[source][target]
+        if target in self.kfactor:
+            if source in self.kfactor[target]:
+                return self.kfactor[target][source]
+        raise ValueError(f"There is a invalid vertex. {source} or {target}")
+
+    def compute_drop_voltage_segment(self):
+        """
+        Compute the percent drop voltage for the stretch
+        """
+        self.drop_voltage_segment = {self.root: {'\u039F': 0.0 }}  # Start drop voltage dictionary (point - zero)
+        
+        if not len(self.kfactor):
+            self.k_factor_table()
+
+        for source, value in self.vertices.items():
+            for key1, value in self.vertices[source].neighbors.items():
+                target = key1.get_tag()
+                stretch_dv = self.get_kfactor(source, target) * self.get_payload(target) * self.get_distance(source, target)
+                if (source in self.drop_voltage_segment and target in self.drop_voltage_segment[source]) or \
+                (target in self.drop_voltage_segment and source in self.drop_voltage_segment[target]):
+                    continue
+                if source not in self.drop_voltage_segment:
+                    self.drop_voltage_segment[source] = {}
+                if target not in self.drop_voltage_segment[source]:
+                    self.drop_voltage_segment[source][target] = 0.0
+                self.drop_voltage_segment[source][target] = stretch_dv
+        #return drop_voltage_table     
+
+    def drop_voltage_segment_list(self):
+        return self.drop_voltage_segment
+
+    def get_vertex_tag_from_instance(self, instance):
+        if instance in self.reverse_vertices:
+            return self.reverse_vertices[instance].get_tag()
+        raise ValueError("Vertex instance not found!")
+    
+    def calc_kfactor(self, r, x):
+        """
+        Compute k-factor.
+
+        Args:
+            r (float): Valor de r.
+            x (float): Valor de x.
+
+        Returns:
+            float: O valor do kfactor.
+        """
+        if self.vn == 0:
+            raise ZeroDivisionError("Vpp cannot be zero.")
+
+        angle = self.angle_pf_radix()
+        pf = self.power_factor
+        vn_squared = self.vn ** 2
+
+        numerator = (r * pf) + (x * sin(angle))
+        result = (numerator / vn_squared) * 100
+
+        return result
+
+    def angle_pf_radix(self):
+        """
+        Return angle of power factor in radix
+        """
+        return acos(self.power_factor) # Angle in radix
+
+    def angle_pf_degree(self):
+        """
+        Return angle of power factor in degree
+        """
+        return (acos(self.power_factor) * 180) / pi # Angle in degree
+
     def get_carga_ponto(self, vertex):
         """Retorna a carga de um vértice."""
         return self.vertices[vertex].weight
@@ -334,8 +482,17 @@ class System(Graph):
         return System()
 
     def get_data(self):
+        """
+        Funcao ainda nao faz nada
+        """
         for key, value in self.vertices:
             print(self.vertices[key], value)
+
+    def compute_system(self):
+        self.accumulate_payload()
+        self.k_factor_table()
+        self.compute_drop_voltage_segment()
+        self.DFS_drop_voltage()
 
     def __str__(self):
         return f"System: {self.root}"
