@@ -367,7 +367,7 @@ class System(Graph):
         if self.root is None:
             raise ValueError("The vertex root cannot be None.")
         if self.root not in self.vertices:
-            raise ValueError("You must a root vertex to compute the drop voltage")
+            raise ValueError("You must have a root vertex to compute the drop voltage")
         self.DFS_expert()
 
     def payload_list(self):
@@ -407,37 +407,6 @@ class System(Graph):
                 return self.kfactor[target][source]
         raise ValueError(f"There is a invalid vertex. {source} or {target}")
 
-    def compute_drop_voltage_segment(self):
-        """
-        Compute the percent drop voltage for the stretch
-        """
-        self.drop_voltage_segment = {self.root: {'\u039F': 0.0 }}  # Start drop voltage dictionary (point - zero)
-        
-        if not len(self.kfactor):
-            self.k_factor_table()
-
-        for source, value in self.vertices.items():
-            for key1, value in self.vertices[source].neighbors.items():
-                target = key1.get_tag()
-                stretch_dv = self.get_kfactor(source, target) * self.get_payload(target) * self.get_distance(source, target)
-                if (source in self.drop_voltage_segment and target in self.drop_voltage_segment[source]) or \
-                (target in self.drop_voltage_segment and source in self.drop_voltage_segment[target]):
-                    continue
-                if source not in self.drop_voltage_segment:
-                    self.drop_voltage_segment[source] = {}
-                if target not in self.drop_voltage_segment[source]:
-                    self.drop_voltage_segment[source][target] = 0.0
-                self.drop_voltage_segment[source][target] = stretch_dv
-        #return drop_voltage_table     
-
-    def drop_voltage_segment_list(self):
-        return self.drop_voltage_segment
-
-    def get_vertex_tag_from_instance(self, instance):
-        if instance in self.reverse_vertices:
-            return self.reverse_vertices[instance].get_tag()
-        raise ValueError("Vertex instance not found!")
-    
     def calc_kfactor(self, r, x):
         """
         Compute k-factor.
@@ -460,6 +429,36 @@ class System(Graph):
         result = (numerator / vn_squared) * 100
 
         return result
+
+    def compute_drop_voltage_segment(self):
+        """
+        Compute the percent drop voltage for the stretch
+        """
+        self.drop_voltage_segment = {self.root: {'\u039F': 0.0 }}  # Start drop voltage dictionary (point - zero)
+        
+        if not len(self.kfactor):
+            self.k_factor_table()
+
+        for source, value in self.vertices.items():
+            for key1, value in self.vertices[source].neighbors.items():
+                target = key1.get_tag()
+                stretch_dv = self.get_kfactor(source, target) * self.get_payload(target) * self.get_distance(source, target)
+                if (source in self.drop_voltage_segment and target in self.drop_voltage_segment[source]) or \
+                (target in self.drop_voltage_segment and source in self.drop_voltage_segment[target]):
+                    continue
+                if source not in self.drop_voltage_segment:
+                    self.drop_voltage_segment[source] = {}
+                if target not in self.drop_voltage_segment[source]:
+                    self.drop_voltage_segment[source][target] = 0.0
+                self.drop_voltage_segment[source][target] = stretch_dv
+
+    def drop_voltage_segment_list(self):
+        return self.drop_voltage_segment
+
+    def get_vertex_tag_from_instance(self, instance):
+        if instance in self.reverse_vertices:
+            return self.reverse_vertices[instance].get_tag()
+        raise ValueError("Vertex instance not found!")
 
     def angle_pf_radix(self):
         """
